@@ -156,7 +156,6 @@ Setting `efficacy = 0` (as in the baseline example) creates the covariate column
 sim_res <- simulate_multiple_households_comm(
   n_households    = 50,
   viral_testing   = "viral load",    # or "Ct"
-  model_type      = "ODE",           # or "empirical"
   infectious_shape = 10,
   infectious_scale = 1,              # Mean infectious period = 10 days
   waning_shape    = 6,
@@ -251,7 +250,6 @@ stan_input <- prepare_stan_data(
   study_start_date = as.Date(study_start),
   study_end_date   = as.Date(study_end),
   use_vl_data      = 1,
-  model_type       = "ODE",
   imputation_params = VL_params_list,
   priors           = my_priors,
   role_mixing_matrix = role_mixing_weights
