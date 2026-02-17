@@ -37,13 +37,22 @@ library(HHBayes)
 library(rstan)
 library(ggpubr)
 
+# 0. Generate survelliance dataset
+dates_weekly <- seq(from = as.Date(study_start), to = as.Date(study_end), by = "week")
+surveillance_data <- data.frame(
+  date = dates_weekly,
+  # Random epidemic curve (low start, peak middle, low end)
+  cases = 0.1 + 100 * exp(-0.0002 * (as.numeric(dates_weekly - mean(dates_weekly)))^2) + abs(rnorm( length(dates_weekly),mean = 0, sd = 10))
+)
+
 # 1. Simulate 50 households with ODE-based viral dynamics
 sim <- simulate_multiple_households_comm(
   n_households = 50,
   viral_testing = "viral load",
   start_date = "2024-07-01",
   end_date   = "2025-06-30",
-  seed = 123
+  seed = 123,
+  surveillance_df = surveillance_data
 )
 
 # 2. Summarize attack rates
