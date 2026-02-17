@@ -1,19 +1,784 @@
 ---
-title: "HouseholdSim-tutorial"
+title: "Getting Started with HHBayes"
+subtitle: "A Complete Walkthrough: Simulate, Fit, Analyze, and Visualize"
+author: "Ke Li"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{HouseholdSim-tutorial}
+  %\VignetteIndexEntry{Getting Started with HHBayes}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 10,
+  fig.height = 5.5,
+  warning = FALSE,
+  message = FALSE
 )
 ```
 
-```{r setup}
-library(HouseholdSim)
+## Overview
+
+**HHBayes** provides an end-to-end pipeline for household infectious disease
+transmission research. This vignette walks through a complete analysis — from
+defining a study scenario, through simulation, data preparation, Bayesian model
+fitting, and visualization — using a single reproducible example.
+
+The pipeline has five stages:
+
+1. **Setup** — Define the study timeline, surveillance data, household structure,
+   contact patterns, and interventions.
+2. **Simulate** — Generate multi-household outbreak data with realistic viral
+   dynamics.
+3. **Prepare** — Transform simulated (or observed) data into the format required
+   by the Stan model.
+4. **Fit** — Run the Bayesian transmission model via Hamiltonian Monte Carlo.
+5. **Visualize** — Inspect posteriors, epidemic curves, and transmission chains.
+
+```{r load-packages}
+library(HHBayes)
+library(dplyr)
+library(rstan)
+library(ggpubr)
+```
+
+---
+
+## Part 1: Study Setup
+
+Before simulating, we define four components: the study timeline, external
+surveillance data, the household composition rules, and the within-household
+contact structure.
+
+### 1.1 Study Timeline
+
+All simulations are anchored to a calendar start and end date. These dates
+define the duration of the simulation in days.
+
+```{r setup-dates}
+study_start <- "2024-07-01"
+study_end   <- "2025-06-30"
+
+cat("Study duration:",
+    as.integer(as.Date(study_end) - as.Date(study_start)) + 1, "days\n")
+```
+
+### 1.2 Surveillance Data (Community Forcing)
+
+Community-acquired infections are driven by an external surveillance curve.
+Supply a dataframe with two columns: `date` and `cases`. The case counts are
+automatically normalized to [0, 1] and interpolated to daily resolution inside
+the simulator.
+
+Here we create a synthetic Gaussian-shaped epidemic curve peaking in the middle
+of the study:
+
+```{r setup-surveillance}
+dates_weekly <- seq(from = as.Date(study_start),
+                    to = as.Date(study_end), by = "week")
+
+surveillance_data <- data.frame(
+  date  = dates_weekly,
+  cases = 0.1 +
+    100 * exp(-0.0002 * (as.numeric(dates_weekly - mean(dates_weekly)))^2) +
+    abs(rnorm(length(dates_weekly), mean = 0, sd = 10))
+)
+
+plot(surveillance_data$date, surveillance_data$cases,
+     type = "l", lwd = 2, col = "steelblue",
+     xlab = "Date", ylab = "Weekly cases",
+     main = "Synthetic Surveillance Curve")
+```
+
+If you have real surveillance data, simply replace this dataframe. If no
+surveillance data or seasonal forcing is provided, the community force of
+infection remains constant throughout the study.
+
+### 1.3 Contact Matrix (Role Mixing Weights)
+
+Within a household, not all members contact each other equally. A
+`role_mixing_matrix` defines the relative contact intensity between each pair
+of roles. Rows represent the **source** (infector) and columns represent the
+**target** (infectee):
+
+```{r setup-contact}
+role_mixing_weights <- matrix(c(
+# Target:  Infant Toddler Adult Elderly
+           0.0,   0.5,    1.0,  0.5,    # Source: Infant
+           0.5,   0.9,    0.7,  0.5,    # Source: Toddler
+           1.0,   0.7,    0.6,  0.7,    # Source: Adult
+           0.5,   0.5,    0.7,  0.0     # Source: Elderly
+), nrow = 4, byrow = TRUE,
+   dimnames = list(
+     c("infant", "toddler", "adult", "elderly"),
+     c("infant", "toddler", "adult", "elderly")))
+
+role_mixing_weights
+```
+
+**Reading this matrix:**
+
+- **Adult -> Infant = 1.0** (high): Adults are primary caregivers for infants.
+- **Toddler -> Toddler = 0.9** (high): Toddler siblings play together
+  frequently.
+- **Elderly -> Infant = 0.5** (moderate): Some grandparent caregiving.
+- **Elderly -> Elderly = 0.0** (none): In this scenario, we assume at most one
+  elderly per household, so self-contact is irrelevant.
+- **Infant -> Infant = 0.0** (none): Infants do not infect each other directly.
+
+When a household is generated (e.g., with roles `c("adult", "adult", "infant",
+"toddler")`), the simulator expands this 4x4 role matrix into a 4x4
+individual-level contact matrix by looking up each pair's roles.
+
+### 1.4 Household Composition
+
+Each household is randomly assembled according to a demographic profile. The
+`household_profile_list` controls the probability distribution over household
+compositions:
+
+```{r setup-household}
+household_profile <- list(
+  prob_adults   = c(0, 0, 1),        # P(0, 1, 2 adults) — always 2 parents
+  prob_infant   = 1.0,               # P(infant present) — always 1 infant
+  prob_siblings = c(0, 0.8, 0.2),    # P(0, 1, 2 toddlers) — 80% one, 20% two
+  prob_elderly  = c(0.7, 0.1, 0.2)   # P(0, 1, 2 elderly) — 70% none
+)
+```
+
+With this profile, most households will have **2 adults + 1 infant + 1
+toddler** (the most common draw), with some households also including 1-2
+elderly members.
+
+You can modify this to represent different demographic settings:
+
+```{r setup-household-examples, eval = FALSE}
+# Nuclear Western family
+nuclear <- list(
+  prob_adults   = c(0.05, 0.15, 0.80),
+  prob_infant   = 0.5,
+  prob_siblings = c(0.40, 0.45, 0.15),
+  prob_elderly  = c(0.95, 0.04, 0.01)
+)
+
+# Multi-generational Asian family
+multigenerational <- list(
+  prob_adults   = c(0, 0, 1),
+  prob_infant   = 1.0,
+  prob_siblings = c(0.05, 0.30, 0.65),
+  prob_elderly  = c(0.20, 0.50, 0.30)
+)
+```
+
+### 1.5 Intervention Strategies (Covariates)
+
+Interventions are defined via `covariates_config`. Each entry specifies:
+
+- **`name`**: Column name in the output data.
+- **`efficacy`**: Fractional reduction (0 to 1). A value of 0.6 means 60%
+  reduction.
+- **`effect_on`**: What is reduced — `"susceptibility"`, `"infectivity"`, or
+  `"both"`.
+- **`coverage`**: Role-specific probability of receiving the intervention.
+
+```{r setup-intervention}
+sim_config <- list(
+  list(
+    name      = "vacc_status",
+    efficacy  = 0,             # Set to 0 for baseline (no effect)
+    effect_on = "both",
+    coverage  = list(
+      infant  = 0,
+      toddler = 0,
+      adult   = 0,
+      elderly = 0
+    )
+  )
+)
+```
+
+In this baseline example, `efficacy = 0` means the vaccination covariate column
+is created in the output but has no actual effect on transmission. This is
+useful for testing the pipeline before introducing real intervention effects.
+
+**To simulate an actual intervention**, set nonzero efficacy and coverage:
+
+```{r setup-intervention-real, eval = FALSE}
+# Real vaccination scenario
+vacc_config <- list(
+  list(
+    name      = "vacc_status",
+    efficacy  = 0.5,           # 50% reduction in susceptibility and infectivity
+    effect_on = "both",
+    coverage  = list(
+      infant  = 0.00,          # Not eligible
+      toddler = 0.30,
+      adult   = 0.80,
+      elderly = 0.90
+    )
+  ),
+  # You can add multiple interventions — they stack multiplicatively
+  list(
+    name      = "masked",
+    efficacy  = 0.3,
+    effect_on = "both",
+    coverage  = list(infant = 0, toddler = 0.1, adult = 0.7, elderly = 0.6)
+  )
+)
+```
+
+**How stacking works:** A vaccinated (efficacy = 0.5) and masked (efficacy =
+0.3) adult has their susceptibility multiplied by
+`(1 - 0.5) * (1 - 0.3) = 0.35`, i.e., a 65% total reduction.
+
+---
+
+## Part 2: Simulation
+
+### 2.1 Run the Simulator
+
+With all components defined, we run the simulation. Key parameters to note:
+
+- **`viral_testing = "viral load"`**: Uses log10 viral load scale (higher =
+  more virus).
+- **`model_type = "ODE"`**: Within-host viral dynamics are generated by solving
+  a target-cell-limited ODE model (vs `"empirical"` for parametric curves).
+- **`infectious_shape/scale`**: Gamma distribution for the infectious period.
+  With `shape = 10, scale = 1`, the mean is 10 days.
+- **`waning_shape/scale`**: Gamma distribution for post-recovery immunity. With
+  `shape = 6, scale = 10`, mean immunity lasts 60 days before waning.
+- **`surveillance_interval = 4`**: Routine testing every 4 days.
+
+```{r simulate}
+sim_res <- simulate_multiple_households_comm(
+  n_households    = 50,
+  viral_testing   = "viral load",
+  model_type      = "ODE",
+  infectious_shape = 10,
+  infectious_scale = 1,
+  waning_shape    = 6,
+  waning_scale    = 10,
+  surveillance_interval = 4,
+  start_date      = study_start,
+  end_date        = study_end,
+  surveillance_df = surveillance_data,
+  covariates_config      = sim_config,
+  household_profile_list = household_profile,
+  role_mixing_matrix     = role_mixing_weights,
+  seed = 123
+)
+```
+
+### 2.2 Inspect the Output
+
+The simulation returns a list with two dataframes.
+
+**`hh_df`**: One row per person per infection episode.
+
+```{r inspect-hh}
+head(sim_res$hh_df)
+```
+
+```{r inspect-hh-str}
+cat("Columns:", paste(names(sim_res$hh_df), collapse = ", "), "\n")
+cat("Total person-episodes:", nrow(sim_res$hh_df), "\n")
+cat("Unique people:", nrow(distinct(sim_res$hh_df, hh_id, person_id)), "\n")
+```
+
+**`diagnostic_df`**: Simulated test results at each surveillance time point.
+
+```{r inspect-diag}
+head(sim_res$diagnostic_df)
+```
+
+```{r inspect-diag-str}
+cat("Columns:", paste(names(sim_res$diagnostic_df), collapse = ", "), "\n")
+cat("Total test records:", nrow(sim_res$diagnostic_df), "\n")
+cat("Positive tests:", sum(sim_res$diagnostic_df$test_result), "\n")
+```
+
+### 2.3 Summarize Attack Rates
+
+`summarize_attack_rates()` computes primary attack rates (proportion ever
+infected at least once) and reinfection summaries, both overall and by role:
+
+```{r attack-rates}
+rates <- summarize_attack_rates(sim_res)
+```
+
+**Overall primary attack rate:**
+
+```{r ar-overall}
+print(rates$primary_overall)
+```
+
+**Primary attack rate by role:**
+
+```{r ar-by-role}
+print(rates$primary_by_role)
+```
+
+**Reinfection summary:**
+
+```{r ar-reinf}
+print(rates$reinf_overall)
+print(rates$reinf_by_role)
+```
+
+Roles with higher `phi_by_role` (susceptibility) will tend to have higher
+attack rates. Reinfections occur when immunity wanes (controlled by
+`waning_shape` and `waning_scale`).
+
+### 2.4 Plot the Epidemic Curve
+
+`plot_epidemic_curve()` overlays the simulated infections (stacked bars,
+colored by age group) with the external surveillance curve (black line). Both
+are aggregated into bins of `bin_width` days:
+
+```{r epi-curve, fig.width=10, fig.height=6}
+my_plot <- plot_epidemic_curve(
+  sim_res,
+  surveillance_data,
+  start_date_str = study_start,
+  bin_width = 7   # Weekly bins
+)
+print(my_plot)
+```
+
+The left y-axis shows simulated positive samples; the right y-axis shows
+surveillance case counts. The two series are independently scaled so their
+peaks align visually.
+
+---
+
+## Part 3: Preparing Data for Stan
+
+The Bayesian model requires a specifically formatted input list. The
+`prepare_stan_data()` function handles column renaming, infection window
+imputation, viral load gap-filling, seasonal forcing construction, covariate
+matrix assembly, and prior specification.
+
+### 3.1 Join Covariates to Diagnostic Data
+
+Covariates (e.g., vaccination status) are stored in `hh_df` but need to be
+merged into `diagnostic_df` before passing to Stan:
+
+```{r stan-join}
+# Extract a 1-row-per-person covariate table
+person_covariates <- sim_res$hh_df %>%
+  dplyr::select(hh_id, person_id, vacc_status) %>%
+  dplyr::distinct()
+
+# Merge into diagnostic data
+df_for_stan <- sim_res$diagnostic_df %>%
+  dplyr::left_join(person_covariates, by = c("hh_id", "person_id"))
+
+cat("Rows in df_for_stan:", nrow(df_for_stan), "\n")
+cat("Columns:", paste(names(df_for_stan), collapse = ", "), "\n")
+```
+
+### 3.2 Define Priors
+
+HHBayes supports flexible priors for all key model parameters. Each prior is
+specified as a list with `dist` (one of `"normal"`, `"uniform"`, `"lognormal"`)
+and `params` (a length-2 vector):
+
+```{r stan-priors}
+my_priors <- list(
+  beta1      = list(dist = "normal",    params = c(-5, 1)),
+  beta2      = list(dist = "normal",    params = c(-5, 1)),
+  alpha      = list(dist = "normal",    params = c(-4, 1)),
+  covariates = list(dist = "normal",    params = c(0, 2)),
+  gen_shape  = list(dist = "lognormal", params = c(1.5, 0.5)),
+  gen_rate   = list(dist = "lognormal", params = c(0.0, 0.5)),
+  ct50       = list(dist = "normal",    params = c(3, 1)),
+  slope      = list(dist = "lognormal", params = c(0.4, 0.5))
+)
+```
+
+| Prior | Parameter | Distribution | Meaning |
+|---|---|---|---|
+| `beta1` | Log transmission rate 1 | Normal(-5, 1) | Baseline contact-driven transmission |
+| `beta2` | Log transmission rate 2 | Normal(-5, 1) | Viral-load-dependent transmission |
+| `alpha` | Log community rate | Normal(-4, 1) | Community importation rate |
+| `covariates` | Covariate coefficients | Normal(0, 2) | Effect of interventions (centered at 0 = no effect) |
+| `gen_shape` | Generation interval shape | LogNormal(1.5, 0.5) | Shape of the infectiousness profile |
+| `gen_rate` | Generation interval rate | LogNormal(0.0, 0.5) | Rate of the infectiousness profile |
+| `ct50` | Viral load reference | Normal(3, 1) | Reference point for VL-infectiousness function |
+| `slope` | Dose-response slope | LogNormal(0.4, 0.5) | How steeply infectiousness scales with VL |
+
+If any prior is omitted, sensible defaults are used.
+
+### 3.3 Viral Load Imputation Parameters
+
+The Stan data preparation step can fill gaps in observed viral data using
+theoretical trajectory curves. These role-specific parameters define the shape
+of the double-exponential viral load curve:
+
+```{r stan-vl-params}
+VL_params_list <- list(
+  adult   = list(v_p = 4.14, t_p = 5.09, lambda_g = 2.31, lambda_d = 2.71),
+  infant  = list(v_p = 5.84, t_p = 4.09, lambda_g = 2.82, lambda_d = 1.01),
+  toddler = list(v_p = 5.84, t_p = 4.09, lambda_g = 2.82, lambda_d = 1.01),
+  elderly = list(v_p = 2.95, t_p = 5.10, lambda_g = 3.15, lambda_d = 0.87)
+)
+```
+
+| Parameter | Description |
+|---|---|
+| `v_p` | Peak log10 viral load |
+| `t_p` | Time to peak (days post-infection) |
+| `lambda_g` | Growth rate (ascending limb) |
+| `lambda_d` | Decay rate (descending limb) |
+
+Note that infants reach a higher peak (`v_p = 5.84`) faster (`t_p = 4.09`)
+and decay more slowly (`lambda_d = 1.01`) compared to adults.
+
+### 3.4 Build the Stan Input
+
+```{r stan-prepare}
+stan_input <- prepare_stan_data(
+  df_clean          = df_for_stan,
+  surveillance_df   = surveillance_data,
+  study_start_date  = as.Date(study_start),
+  study_end_date    = as.Date(study_end),
+  use_vl_data       = 1,
+  model_type        = "ODE",
+  ODE_params_list   = NULL,
+  covariates_susceptibility = NULL,  # No covariates in this baseline
+  covariates_infectivity    = NULL,
+  imputation_params = VL_params_list,
+  priors            = my_priors,
+  role_mixing_matrix = role_mixing_weights
+)
+
+cat("Stan data prepared successfully.\n")
+cat("Number of individuals (N):", stan_input$N, "\n")
+cat("Number of time steps (T):", stan_input$T, "\n")
+cat("Number of households (H):", stan_input$H, "\n")
+cat("Number of roles (R):", stan_input$R, "\n")
+```
+
+The returned `stan_input` is a named list containing all arrays, matrices, and
+scalars expected by the Stan model.
+
+---
+
+## Part 4: Fitting the Bayesian Model
+
+### 4.1 Run HMC Sampling
+
+`fit_household_model()` calls `rstan::sampling()` on the pre-compiled Stan
+model included with the package. We exclude internal bookkeeping parameters
+from the output using `pars` + `include = FALSE`:
+
+```{r fit-model, eval = FALSE}
+options(mc.cores = parallel::detectCores())
+
+fit <- fit_household_model(
+  stan_input,
+  pars    = c("log_phi_by_role_raw",
+              "log_kappa_by_role_raw",
+              "log_beta1",
+              "log_beta2",
+              "log_alpha_comm",
+              "g_curve_est",
+              "V_term_calc"),
+  include = FALSE,    # Exclude these internal parameters from saved output
+  iter    = 1000,     # For testing; use 2000+ for real analysis
+  warmup  = 500,      # For testing; use 1000+ for real analysis
+  chains  = 1         # For testing; use 4 for real analysis
+)
+```
+
+**Recommended settings for publication-quality results:**
+
+```{r fit-model-real, eval = FALSE}
+fit <- fit_household_model(
+  stan_input,
+  pars    = c("log_phi_by_role_raw", "log_kappa_by_role_raw",
+              "log_beta1", "log_beta2", "log_alpha_comm",
+              "g_curve_est", "V_term_calc"),
+  include = FALSE,
+  iter    = 2000,
+  warmup  = 1000,
+  chains  = 4
+)
+```
+
+### 4.2 View Summary
+
+```{r fit-summary, eval = FALSE}
+print(fit, probs = c(0.025, 0.5, 0.975))
+```
+
+The summary table shows posterior medians and 95% credible intervals for all
+saved parameters. Key parameters to look for:
+
+| Parameter | Interpretation |
+|---|---|
+| `beta1` | Within-household baseline transmission rate |
+| `beta2` | Viral-load-dependent transmission rate |
+| `alpha_comm` | Community importation rate |
+| `phi_by_role[1..4]` | Susceptibility multipliers (Adult, Infant, Toddler, Elderly) |
+| `kappa_by_role[1..4]` | Infectivity multipliers |
+| `gen_shape`, `gen_rate` | Generation interval distribution parameters |
+| `Ct50`, `slope_ct` | Viral load dose-response curve parameters |
+
+### 4.3 Convergence Diagnostics
+
+Check that all `Rhat` values are close to 1.0 (< 1.05) and that effective
+sample sizes (`n_eff`) are adequate:
+
+```{r fit-diagnostics, eval = FALSE}
+# Quick check
+fit_summary <- rstan::summary(fit)$summary
+cat("Max Rhat:", max(fit_summary[, "Rhat"], na.rm = TRUE), "\n")
+cat("Min n_eff:", min(fit_summary[, "n_eff"], na.rm = TRUE), "\n")
+
+# Trace plots (requires bayesplot)
+if (requireNamespace("bayesplot", quietly = TRUE)) {
+  bayesplot::mcmc_trace(fit, pars = c("beta1", "beta2", "alpha_comm"))
+}
+```
+
+If `Rhat > 1.05` or you see divergent transitions, try increasing `iter`,
+`warmup`, or the `adapt_delta` control parameter (default is 0.95 in
+`fit_household_model`).
+
+---
+
+## Part 5: Visualization
+
+### 5.1 Posterior Distributions
+
+`plot_posterior_distributions()` shows violin + box plots of the posterior
+distributions of role-specific susceptibility (`phi`) and infectivity
+(`kappa`) on a log10 scale:
+
+```{r plot-posteriors, eval = FALSE}
+p_post <- plot_posterior_distributions(fit)
+print(p_post)
+```
+
+The dashed horizontal line at 0 represents the reference level (log10(1) = 0).
+Roles above the line are more susceptible/infectious than the baseline; roles
+below are less.
+
+### 5.2 Covariate Effects (Forest Plot)
+
+If covariates were included in the model, `plot_covariate_effects()` shows
+their posterior effect estimates:
+
+```{r plot-covariates, eval = FALSE}
+plot_covariate_effects(fit, stan_input)
+```
+
+Each row is a covariate. The point shows the posterior median, and the
+horizontal bar shows the 95% credible interval. An interval that crosses zero
+indicates no statistically clear effect.
+
+### 5.3 Transmission Chain Reconstruction
+
+`reconstruct_transmission_chains()` uses posterior parameter estimates to
+compute the probability that each infected person was infected by each
+possible source (or from the community):
+
+```{r plot-chains, eval = FALSE}
+chains <- reconstruct_transmission_chains(
+  fit,
+  stan_input,
+  min_prob_threshold = 0.001   # Keep links with >= 0.1% probability
+)
+
+head(chains)
+```
+
+The output has one row per potential link:
+
+| Column | Description |
+|---|---|
+| `target` | Index of the infected person |
+| `hh_id` | Household ID |
+| `day` | Day of infection |
+| `source` | Index of the infector, or `"Community"` |
+| `prob` | Posterior probability of this transmission link |
+
+### 5.4 Household Timeline
+
+`plot_household_timeline()` visualizes the infection history of a single
+household. Each person is shown as a horizontal track, colored by role. Infected
+periods are highlighted, and arrows show probable transmission links:
+
+```{r plot-timeline, eval = FALSE}
+p_hh <- plot_household_timeline(
+  chains,
+  stan_input,
+  target_hh_id = 11     # Plot household #11
+)
+print(p_hh)
+```
+
+You can adjust which links are shown using `prob_cutoff` (e.g., `prob_cutoff
+= 0.05` to show only links with at least 5% probability):
+
+```{r plot-timeline-filtered, eval = FALSE}
+p_hh_filtered <- plot_household_timeline(
+  chains, stan_input,
+  target_hh_id = 11,
+  prob_cutoff  = 0.05,
+  plot_width   = 11,
+  plot_height  = 7
+)
+print(p_hh_filtered)
+```
+
+---
+
+## Appendix A: Complete Script
+
+For convenience, here is the entire pipeline as a single copy-pasteable script:
+
+```{r full-script, eval = FALSE}
+library(HHBayes)
+library(dplyr)
+library(rstan)
+library(ggpubr)
+
+# ==============================================================================
+# 1. SETUP
+# ==============================================================================
+
+study_start <- "2024-07-01"
+study_end   <- "2025-06-30"
+
+# Surveillance data
+dates_weekly <- seq(as.Date(study_start), as.Date(study_end), by = "week")
+surveillance_data <- data.frame(
+  date  = dates_weekly,
+  cases = 0.1 + 100 * exp(-0.0002 * (as.numeric(dates_weekly -
+    mean(dates_weekly)))^2) + abs(rnorm(length(dates_weekly), 0, 10))
+)
+
+# Contact matrix
+role_mixing_weights <- matrix(c(
+  0.0, 0.5, 1.0, 0.5,
+  0.5, 0.9, 0.7, 0.5,
+  1.0, 0.7, 0.6, 0.7,
+  0.5, 0.5, 0.7, 0.0
+), nrow = 4, byrow = TRUE,
+dimnames = list(
+  c("infant", "toddler", "adult", "elderly"),
+  c("infant", "toddler", "adult", "elderly")))
+
+# Household profile
+household_profile <- list(
+  prob_adults   = c(0, 0, 1),
+  prob_infant   = 1.0,
+  prob_siblings = c(0, 0.8, 0.2),
+  prob_elderly  = c(0.7, 0.1, 0.2)
+)
+
+# Intervention (baseline: no effect)
+sim_config <- list(
+  list(name = "vacc_status", efficacy = 0, effect_on = "both",
+       coverage = list(infant = 0, toddler = 0, adult = 0, elderly = 0))
+)
+
+# ==============================================================================
+# 2. SIMULATE
+# ==============================================================================
+
+sim_res <- simulate_multiple_households_comm(
+  n_households = 50, viral_testing = "viral load", model_type = "ODE",
+  infectious_shape = 10, infectious_scale = 1,
+  waning_shape = 6, waning_scale = 10,
+  surveillance_interval = 4,
+  start_date = study_start, end_date = study_end,
+  surveillance_df = surveillance_data,
+  covariates_config = sim_config,
+  household_profile_list = household_profile,
+  role_mixing_matrix = role_mixing_weights,
+  seed = 123
+)
+
+rates <- summarize_attack_rates(sim_res)
+print(rates$primary_by_role)
+
+plot_epidemic_curve(sim_res, surveillance_data,
+                    start_date_str = study_start, bin_width = 7)
+
+# ==============================================================================
+# 3. PREPARE FOR STAN
+# ==============================================================================
+
+person_covariates <- sim_res$hh_df %>%
+  select(hh_id, person_id, vacc_status) %>% distinct()
+
+df_for_stan <- sim_res$diagnostic_df %>%
+  left_join(person_covariates, by = c("hh_id", "person_id"))
+
+my_priors <- list(
+  beta1 = list(dist = "normal", params = c(-5, 1)),
+  beta2 = list(dist = "normal", params = c(-5, 1)),
+  alpha = list(dist = "normal", params = c(-4, 1)),
+  covariates = list(dist = "normal", params = c(0, 2)),
+  gen_shape = list(dist = "lognormal", params = c(1.5, 0.5)),
+  gen_rate  = list(dist = "lognormal", params = c(0.0, 0.5)),
+  ct50  = list(dist = "normal", params = c(3, 1)),
+  slope = list(dist = "lognormal", params = c(0.4, 0.5))
+)
+
+VL_params_list <- list(
+  adult   = list(v_p = 4.14, t_p = 5.09, lambda_g = 2.31, lambda_d = 2.71),
+  infant  = list(v_p = 5.84, t_p = 4.09, lambda_g = 2.82, lambda_d = 1.01),
+  toddler = list(v_p = 5.84, t_p = 4.09, lambda_g = 2.82, lambda_d = 1.01),
+  elderly = list(v_p = 2.95, t_p = 5.10, lambda_g = 3.15, lambda_d = 0.87)
+)
+
+stan_input <- prepare_stan_data(
+  df_clean = df_for_stan, surveillance_df = surveillance_data,
+  study_start_date = as.Date(study_start),
+  study_end_date = as.Date(study_end),
+  use_vl_data = 1, model_type = "ODE",
+  imputation_params = VL_params_list, priors = my_priors,
+  role_mixing_matrix = role_mixing_weights
+)
+
+# ==============================================================================
+# 4. FIT MODEL
+# ==============================================================================
+
+options(mc.cores = parallel::detectCores())
+
+fit <- fit_household_model(
+  stan_input,
+  pars = c("log_phi_by_role_raw", "log_kappa_by_role_raw",
+           "log_beta1", "log_beta2", "log_alpha_comm",
+           "g_curve_est", "V_term_calc"),
+  include = FALSE,
+  iter = 1000, warmup = 500, chains = 1
+)
+
+# ==============================================================================
+# 5. RESULTS
+# ==============================================================================
+
+print(fit, probs = c(0.025, 0.5, 0.975))
+plot_posterior_distributions(fit)
+
+chains <- reconstruct_transmission_chains(fit, stan_input,
+                                           min_prob_threshold = 0.001)
+plot_household_timeline(chains, stan_input, target_hh_id = 11)
+```
+
+---
+
+## Session Info
+
+```{r session-info}
+sessionInfo()
 ```
