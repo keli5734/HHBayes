@@ -41,7 +41,6 @@ library(ggpubr)
 sim <- simulate_multiple_households_comm(
   n_households = 50,
   viral_testing = "viral load",
-  model_type = "ODE",
   start_date = "2024-07-01",
   end_date   = "2025-06-30",
   seed = 123
