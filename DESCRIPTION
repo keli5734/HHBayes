@@ -1,9 +1,19 @@
 Package: HHBayes
 Title: An R package for simulating household transmission datasets and estimating parameters from real-world data.
 Version: 0.0.0.9000
-Authors@R: 
-    person("Ke", "Li", , "ke.li.kl662@yale.edu", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+  person(given = "Ke", family = "Li",
+         email = "ke.li.kl662@yale.edu",
+         role = c("aut","cre")),
+  person(given = "Yiren", family = "Hou",
+         email = "yiren.hou@yale.edu",
+         role = c("aut"))
+	)
+Description: Provides a streamlined pipeline to simulate household infection 
+    dynamics, estimate transmission parameters, and visualize epidemic timelines. 
+    Uses a Bayesian approach with Stan that models transmission probability as a
+    Function of viral load, seasonality and infectivity, multiple infection 
+    episodes (reinfections), and waning immunity modeling.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
