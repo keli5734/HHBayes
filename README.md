@@ -38,6 +38,8 @@ library(rstan)
 library(ggpubr)
 
 # 0. Generate surveillance dataset
+study_start <- "2024-07-01"
+study_end   <- "2025-06-30"
 dates_weekly <- seq(from = as.Date(study_start), to = as.Date(study_end), by = "week")
 surveillance_data <- data.frame(
   date = dates_weekly,
@@ -63,6 +65,8 @@ rates$primary_by_role
 stan_input <- prepare_stan_data(sim$diagnostic_df,
   study_start_date = as.Date("2024-07-01"),
   study_end_date   = as.Date("2025-06-30"))
+  
+options(mc.cores = parallel::detectCores())
 
 fit <- fit_household_model(stan_input, iter = 2000, chains = 4)
 
