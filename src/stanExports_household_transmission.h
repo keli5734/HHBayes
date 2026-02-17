@@ -13,128 +13,229 @@ namespace model_household_transmission_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 121> locations_array__ =
+static constexpr std::array<const char*, 222> locations_array__ =
   {" (found before start of program)",
-  " (in 'household_transmission', line 28, column 2 to column 34)",
-  " (in 'household_transmission', line 29, column 2 to column 36)",
-  " (in 'household_transmission', line 30, column 2 to column 17)",
-  " (in 'household_transmission', line 31, column 2 to column 17)",
-  " (in 'household_transmission', line 32, column 2 to column 17)",
-  " (in 'household_transmission', line 33, column 2 to column 17)",
-  " (in 'household_transmission', line 34, column 2 to column 34)",
-  " (in 'household_transmission', line 35, column 2 to column 34)",
-  " (in 'household_transmission', line 38, column 2 to column 33)",
-  " (in 'household_transmission', line 39, column 2 to column 35)",
-  " (in 'household_transmission', line 40, column 2 to column 39)",
-  " (in 'household_transmission', line 41, column 2 to column 39)",
-  " (in 'household_transmission', line 42, column 2 to column 54)",
-  " (in 'household_transmission', line 43, column 2 to column 54)",
-  " (in 'household_transmission', line 44, column 2 to column 33)",
-  " (in 'household_transmission', line 45, column 17 to column 80)",
-  " (in 'household_transmission', line 45, column 2 to column 80)",
-  " (in 'household_transmission', line 46, column 2 to column 37)",
-  " (in 'household_transmission', line 47, column 17 to column 86)",
-  " (in 'household_transmission', line 47, column 2 to column 86)",
-  " (in 'household_transmission', line 51, column 2 to column 39)",
-  " (in 'household_transmission', line 52, column 2 to column 41)",
-  " (in 'household_transmission', line 53, column 2 to column 28)",
-  " (in 'household_transmission', line 54, column 2 to column 28)",
-  " (in 'household_transmission', line 55, column 2 to column 29)",
-  " (in 'household_transmission', line 56, column 2 to column 29)",
-  " (in 'household_transmission', line 62, column 4 to column 25)",
-  " (in 'household_transmission', line 63, column 4 to column 27)",
-  " (in 'household_transmission', line 60, column 9 to line 64, column 3)",
-  " (in 'household_transmission', line 58, column 4 to column 25)",
-  " (in 'household_transmission', line 59, column 4 to column 27)",
-  " (in 'household_transmission', line 57, column 24 to line 60, column 3)",
-  " (in 'household_transmission', line 57, column 2 to line 64, column 3)",
-  " (in 'household_transmission', line 68, column 4 to column 27)",
-  " (in 'household_transmission', line 70, column 7 to column 35)",
-  " (in 'household_transmission', line 69, column 44 to line 71, column 5)",
-  " (in 'household_transmission', line 69, column 4 to line 71, column 5)",
-  " (in 'household_transmission', line 72, column 4 to column 55)",
-  " (in 'household_transmission', line 75, column 8 to column 26)",
-  " (in 'household_transmission', line 76, column 8 to column 83)",
-  " (in 'household_transmission', line 77, column 8 to column 25)",
-  " (in 'household_transmission', line 78, column 8 to column 62)",
-  " (in 'household_transmission', line 80, column 10 to column 39)",
-  " (in 'household_transmission', line 81, column 32 to column 41)",
-  " (in 'household_transmission', line 81, column 10 to column 41)",
-  " (in 'household_transmission', line 82, column 10 to column 47)",
-  " (in 'household_transmission', line 83, column 23 to column 32)",
-  " (in 'household_transmission', line 83, column 10 to column 32)",
-  " (in 'household_transmission', line 85, column 10 to column 32)",
-  " (in 'household_transmission', line 87, column 13 to column 40)",
-  " (in 'household_transmission', line 86, column 49 to line 88, column 11)",
-  " (in 'household_transmission', line 86, column 10 to line 88, column 11)",
-  " (in 'household_transmission', line 89, column 10 to column 64)",
-  " (in 'household_transmission', line 91, column 10 to column 27)",
-  " (in 'household_transmission', line 96, column 16 to column 26)",
-  " (in 'household_transmission', line 94, column 16 to column 43)",
-  " (in 'household_transmission', line 93, column 13 to line 96, column 26)",
-  " (in 'household_transmission', line 92, column 36 to line 97, column 11)",
-  " (in 'household_transmission', line 92, column 10 to line 97, column 11)",
-  " (in 'household_transmission', line 98, column 10 to column 37)",
-  " (in 'household_transmission', line 100, column 10 to column 27)",
-  " (in 'household_transmission', line 102, column 13 to column 38)",
-  " (in 'household_transmission', line 103, column 28 to column 70)",
-  " (in 'household_transmission', line 103, column 13 to column 70)",
-  " (in 'household_transmission', line 101, column 32 to line 104, column 11)",
-  " (in 'household_transmission', line 101, column 10 to line 104, column 11)",
-  " (in 'household_transmission', line 105, column 10 to column 60)",
-  " (in 'household_transmission', line 106, column 10 to column 33)",
-  " (in 'household_transmission', line 79, column 36 to line 107, column 9)",
-  " (in 'household_transmission', line 79, column 8 to line 107, column 9)",
-  " (in 'household_transmission', line 108, column 8 to column 48)",
-  " (in 'household_transmission', line 109, column 8 to column 61)",
-  " (in 'household_transmission', line 74, column 45 to line 110, column 7)",
-  " (in 'household_transmission', line 74, column 6 to line 110, column 7)",
-  " (in 'household_transmission', line 73, column 19 to line 111, column 5)",
-  " (in 'household_transmission', line 73, column 4 to line 111, column 5)",
-  " (in 'household_transmission', line 66, column 17 to line 112, column 3)",
-  " (in 'household_transmission', line 66, column 2 to line 112, column 3)",
+  " (in 'household_transmission', line 63, column 2 to column 34)",
+  " (in 'household_transmission', line 64, column 2 to column 36)",
+  " (in 'household_transmission', line 66, column 2 to column 17)",
+  " (in 'household_transmission', line 67, column 2 to column 17)",
+  " (in 'household_transmission', line 68, column 2 to column 22)",
+  " (in 'household_transmission', line 70, column 2 to column 40)",
+  " (in 'household_transmission', line 71, column 2 to column 38)",
+  " (in 'household_transmission', line 72, column 2 to column 21)",
+  " (in 'household_transmission', line 73, column 2 to column 25)",
+  " (in 'household_transmission', line 75, column 2 to column 27)",
+  " (in 'household_transmission', line 76, column 2 to column 25)",
+  " (in 'household_transmission', line 80, column 2 to column 33)",
+  " (in 'household_transmission', line 81, column 2 to column 35)",
+  " (in 'household_transmission', line 82, column 2 to column 24)",
+  " (in 'household_transmission', line 83, column 2 to column 49)",
+  " (in 'household_transmission', line 84, column 2 to column 30)",
+  " (in 'household_transmission', line 85, column 2 to column 30)",
+  " (in 'household_transmission', line 100, column 2 to column 51)",
+  " (in 'household_transmission', line 87, column 2 to column 33)",
+  " (in 'household_transmission', line 88, column 17 to column 80)",
+  " (in 'household_transmission', line 88, column 2 to column 80)",
+  " (in 'household_transmission', line 90, column 2 to column 37)",
+  " (in 'household_transmission', line 91, column 17 to column 86)",
+  " (in 'household_transmission', line 91, column 2 to column 86)",
+  " (in 'household_transmission', line 94, column 11 to column 12)",
+  " (in 'household_transmission', line 94, column 4 to column 24)",
+  " (in 'household_transmission', line 95, column 18 to column 74)",
+  " (in 'household_transmission', line 95, column 4 to column 74)",
+  " (in 'household_transmission', line 96, column 4 to column 45)",
+  " (in 'household_transmission', line 93, column 2 to line 97, column 3)",
+  " (in 'household_transmission', line 105, column 11 to column 30)",
+  " (in 'household_transmission', line 108, column 16 to column 73)",
+  " (in 'household_transmission', line 107, column 29 to column 86)",
+  " (in 'household_transmission', line 107, column 11 to line 108, column 73)",
+  " (in 'household_transmission', line 104, column 26 to line 109, column 9)",
+  " (in 'household_transmission', line 104, column 8 to line 109, column 9)",
+  " (in 'household_transmission', line 103, column 21 to line 110, column 7)",
+  " (in 'household_transmission', line 103, column 6 to line 110, column 7)",
+  " (in 'household_transmission', line 102, column 19 to line 111, column 5)",
+  " (in 'household_transmission', line 102, column 4 to line 111, column 5)",
+  " (in 'household_transmission', line 101, column 24 to line 112, column 3)",
+  " (in 'household_transmission', line 101, column 2 to line 112, column 3)",
+  " (in 'household_transmission', line 118, column 2 to column 39)",
+  " (in 'household_transmission', line 119, column 2 to column 39)",
+  " (in 'household_transmission', line 122, column 34 to column 100)",
+  " (in 'household_transmission', line 122, column 7 to column 100)",
+  " (in 'household_transmission', line 121, column 29 to column 94)",
+  " (in 'household_transmission', line 121, column 2 to line 122, column 100)",
+  " (in 'household_transmission', line 124, column 34 to column 100)",
+  " (in 'household_transmission', line 124, column 7 to column 100)",
+  " (in 'household_transmission', line 123, column 29 to column 94)",
+  " (in 'household_transmission', line 123, column 2 to line 124, column 100)",
+  " (in 'household_transmission', line 126, column 34 to column 105)",
+  " (in 'household_transmission', line 126, column 7 to column 105)",
+  " (in 'household_transmission', line 125, column 29 to column 99)",
+  " (in 'household_transmission', line 125, column 2 to line 126, column 105)",
+  " (in 'household_transmission', line 130, column 9 to column 71)",
+  " (in 'household_transmission', line 129, column 29 to column 90)",
+  " (in 'household_transmission', line 129, column 4 to line 130, column 71)",
+  " (in 'household_transmission', line 128, column 18 to line 131, column 3)",
+  " (in 'household_transmission', line 128, column 2 to line 131, column 3)",
+  " (in 'household_transmission', line 134, column 9 to column 70)",
+  " (in 'household_transmission', line 133, column 29 to column 89)",
+  " (in 'household_transmission', line 133, column 4 to line 134, column 70)",
+  " (in 'household_transmission', line 132, column 17 to line 135, column 3)",
+  " (in 'household_transmission', line 132, column 2 to line 135, column 3)",
+  " (in 'household_transmission', line 139, column 34 to column 102)",
+  " (in 'household_transmission', line 139, column 7 to column 102)",
+  " (in 'household_transmission', line 138, column 34 to column 100)",
+  " (in 'household_transmission', line 138, column 7 to line 139, column 102)",
+  " (in 'household_transmission', line 137, column 29 to column 94)",
+  " (in 'household_transmission', line 137, column 2 to line 139, column 102)",
+  " (in 'household_transmission', line 142, column 33 to column 98)",
+  " (in 'household_transmission', line 142, column 7 to column 98)",
+  " (in 'household_transmission', line 141, column 33 to column 96)",
+  " (in 'household_transmission', line 141, column 7 to line 142, column 98)",
+  " (in 'household_transmission', line 140, column 28 to column 90)",
+  " (in 'household_transmission', line 140, column 2 to line 142, column 98)",
+  " (in 'household_transmission', line 145, column 33 to column 94)",
+  " (in 'household_transmission', line 145, column 7 to column 94)",
+  " (in 'household_transmission', line 144, column 33 to column 92)",
+  " (in 'household_transmission', line 144, column 7 to line 145, column 94)",
+  " (in 'household_transmission', line 143, column 28 to column 86)",
+  " (in 'household_transmission', line 143, column 2 to line 145, column 94)",
+  " (in 'household_transmission', line 148, column 34 to column 101)",
+  " (in 'household_transmission', line 148, column 7 to column 101)",
+  " (in 'household_transmission', line 147, column 34 to column 99)",
+  " (in 'household_transmission', line 147, column 7 to line 148, column 101)",
+  " (in 'household_transmission', line 146, column 29 to column 93)",
+  " (in 'household_transmission', line 146, column 2 to line 148, column 101)",
+  " (in 'household_transmission', line 154, column 9 to column 10)",
+  " (in 'household_transmission', line 154, column 2 to column 21)",
+  " (in 'household_transmission', line 155, column 9 to column 10)",
+  " (in 'household_transmission', line 155, column 2 to column 20)",
+  " (in 'household_transmission', line 156, column 9 to column 10)",
+  " (in 'household_transmission', line 156, column 2 to column 24)",
+  " (in 'household_transmission', line 158, column 4 to column 75)",
+  " (in 'household_transmission', line 159, column 4 to column 74)",
+  " (in 'household_transmission', line 160, column 4 to column 58)",
+  " (in 'household_transmission', line 161, column 4 to column 59)",
+  " (in 'household_transmission', line 162, column 4 to column 72)",
+  " (in 'household_transmission', line 157, column 17 to line 163, column 3)",
+  " (in 'household_transmission', line 157, column 2 to line 163, column 3)",
+  " (in 'household_transmission', line 169, column 11 to column 12)",
+  " (in 'household_transmission', line 169, column 4 to column 55)",
+  " (in 'household_transmission', line 172, column 8 to column 26)",
+  " (in 'household_transmission', line 177, column 11 to column 42)",
+  " (in 'household_transmission', line 179, column 13 to column 38)",
+  " (in 'household_transmission', line 180, column 50 to column 75)",
+  " (in 'household_transmission', line 180, column 13 to column 75)",
+  " (in 'household_transmission', line 178, column 45 to line 181, column 12)",
+  " (in 'household_transmission', line 178, column 11 to line 181, column 12)",
+  " (in 'household_transmission', line 175, column 15 to line 182, column 9)",
+  " (in 'household_transmission', line 174, column 11 to column 38)",
+  " (in 'household_transmission', line 173, column 30 to line 175, column 9)",
+  " (in 'household_transmission', line 173, column 8 to line 182, column 9)",
+  " (in 'household_transmission', line 184, column 8 to column 88)",
+  " (in 'household_transmission', line 171, column 24 to line 185, column 7)",
+  " (in 'household_transmission', line 171, column 6 to line 185, column 7)",
+  " (in 'household_transmission', line 170, column 19 to line 186, column 5)",
+  " (in 'household_transmission', line 170, column 4 to line 186, column 5)",
+  " (in 'household_transmission', line 190, column 11 to column 12)",
+  " (in 'household_transmission', line 190, column 4 to column 44)",
+  " (in 'household_transmission', line 193, column 6 to column 85)",
+  " (in 'household_transmission', line 191, column 28 to line 194, column 5)",
+  " (in 'household_transmission', line 191, column 4 to line 194, column 5)",
+  " (in 'household_transmission', line 200, column 8 to column 68)",
+  " (in 'household_transmission', line 203, column 10 to column 103)",
+  " (in 'household_transmission', line 205, column 27 to column 39)",
+  " (in 'household_transmission', line 205, column 10 to column 39)",
+  " (in 'household_transmission', line 207, column 10 to column 56)",
+  " (in 'household_transmission', line 209, column 10 to column 67)",
+  " (in 'household_transmission', line 201, column 25 to line 210, column 9)",
+  " (in 'household_transmission', line 201, column 8 to line 210, column 9)",
+  " (in 'household_transmission', line 199, column 30 to line 211, column 7)",
+  " (in 'household_transmission', line 199, column 6 to line 211, column 7)",
+  " (in 'household_transmission', line 196, column 19 to line 212, column 5)",
+  " (in 'household_transmission', line 196, column 4 to line 212, column 5)",
+  " (in 'household_transmission', line 165, column 17 to line 213, column 3)",
+  " (in 'household_transmission', line 165, column 2 to line 213, column 3)",
   " (in 'household_transmission', line 2, column 2 to column 17)",
   " (in 'household_transmission', line 3, column 2 to column 17)",
   " (in 'household_transmission', line 4, column 2 to column 17)",
   " (in 'household_transmission', line 5, column 2 to column 17)",
   " (in 'household_transmission', line 6, column 2 to column 13)",
   " (in 'household_transmission', line 8, column 2 to column 36)",
-  " (in 'household_transmission', line 9, column 2 to column 36)",
-  " (in 'household_transmission', line 10, column 2 to column 35)",
-  " (in 'household_transmission', line 11, column 2 to column 40)",
+  " (in 'household_transmission', line 9, column 2 to column 32)",
+  " (in 'household_transmission', line 10, column 2 to column 40)",
   " (in 'household_transmission', line 12, column 30 to column 31)",
   " (in 'household_transmission', line 12, column 2 to column 33)",
   " (in 'household_transmission', line 13, column 32 to column 33)",
   " (in 'household_transmission', line 13, column 2 to column 35)",
-  " (in 'household_transmission', line 14, column 26 to column 27)",
-  " (in 'household_transmission', line 14, column 29 to column 30)",
-  " (in 'household_transmission', line 14, column 2 to column 32)",
-  " (in 'household_transmission', line 15, column 37 to column 38)",
-  " (in 'household_transmission', line 15, column 40 to column 41)",
-  " (in 'household_transmission', line 15, column 2 to column 43)",
-  " (in 'household_transmission', line 16, column 13 to column 14)",
-  " (in 'household_transmission', line 16, column 16 to column 17)",
-  " (in 'household_transmission', line 16, column 2 to column 19)",
-  " (in 'household_transmission', line 17, column 31 to column 32)",
-  " (in 'household_transmission', line 17, column 2 to column 34)",
-  " (in 'household_transmission', line 18, column 2 to column 35)",
-  " (in 'household_transmission', line 19, column 23 to column 24)",
-  " (in 'household_transmission', line 19, column 2 to column 26)",
-  " (in 'household_transmission', line 20, column 2 to column 27)",
-  " (in 'household_transmission', line 21, column 26 to column 27)",
-  " (in 'household_transmission', line 21, column 29 to column 40)",
-  " (in 'household_transmission', line 21, column 2 to column 42)",
-  " (in 'household_transmission', line 22, column 2 to column 30)",
-  " (in 'household_transmission', line 23, column 2 to column 32)",
-  " (in 'household_transmission', line 24, column 9 to column 10)",
-  " (in 'household_transmission', line 24, column 12 to column 13)",
-  " (in 'household_transmission', line 24, column 2 to column 36)",
-  " (in 'household_transmission', line 25, column 9 to column 10)",
-  " (in 'household_transmission', line 25, column 2 to column 22)",
-  " (in 'household_transmission', line 28, column 9 to column 12)",
-  " (in 'household_transmission', line 29, column 9 to column 12)",
-  " (in 'household_transmission', line 38, column 18 to column 19)",
-  " (in 'household_transmission', line 39, column 18 to column 19)"};
+  " (in 'household_transmission', line 15, column 26 to column 27)",
+  " (in 'household_transmission', line 15, column 29 to column 30)",
+  " (in 'household_transmission', line 15, column 2 to column 32)",
+  " (in 'household_transmission', line 16, column 26 to column 27)",
+  " (in 'household_transmission', line 16, column 29 to column 30)",
+  " (in 'household_transmission', line 16, column 2 to column 32)",
+  " (in 'household_transmission', line 17, column 9 to column 10)",
+  " (in 'household_transmission', line 17, column 12 to column 13)",
+  " (in 'household_transmission', line 17, column 2 to column 15)",
+  " (in 'household_transmission', line 18, column 35 to column 36)",
+  " (in 'household_transmission', line 18, column 2 to column 38)",
+  " (in 'household_transmission', line 20, column 30 to column 31)",
+  " (in 'household_transmission', line 20, column 2 to column 33)",
+  " (in 'household_transmission', line 22, column 2 to column 26)",
+  " (in 'household_transmission', line 23, column 36 to column 46)",
+  " (in 'household_transmission', line 23, column 2 to column 48)",
+  " (in 'household_transmission', line 24, column 36 to column 46)",
+  " (in 'household_transmission', line 24, column 2 to column 48)",
+  " (in 'household_transmission', line 25, column 26 to column 36)",
+  " (in 'household_transmission', line 25, column 2 to column 38)",
+  " (in 'household_transmission', line 27, column 9 to column 10)",
+  " (in 'household_transmission', line 27, column 12 to column 13)",
+  " (in 'household_transmission', line 27, column 2 to column 36)",
+  " (in 'household_transmission', line 28, column 2 to column 30)",
+  " (in 'household_transmission', line 29, column 2 to column 32)",
+  " (in 'household_transmission', line 31, column 2 to column 22)",
+  " (in 'household_transmission', line 32, column 9 to column 10)",
+  " (in 'household_transmission', line 32, column 12 to column 18)",
+  " (in 'household_transmission', line 32, column 2 to column 27)",
+  " (in 'household_transmission', line 33, column 2 to column 21)",
+  " (in 'household_transmission', line 34, column 9 to column 10)",
+  " (in 'household_transmission', line 34, column 12 to column 17)",
+  " (in 'household_transmission', line 34, column 2 to column 25)",
+  " (in 'household_transmission', line 37, column 2 to column 32)",
+  " (in 'household_transmission', line 37, column 33 to column 62)",
+  " (in 'household_transmission', line 38, column 2 to column 32)",
+  " (in 'household_transmission', line 38, column 33 to column 62)",
+  " (in 'household_transmission', line 39, column 2 to column 32)",
+  " (in 'household_transmission', line 39, column 33 to column 62)",
+  " (in 'household_transmission', line 40, column 2 to column 30)",
+  " (in 'household_transmission', line 40, column 33 to column 60)",
+  " (in 'household_transmission', line 42, column 2 to column 32)",
+  " (in 'household_transmission', line 42, column 33 to column 62)",
+  " (in 'household_transmission', line 43, column 2 to column 31)",
+  " (in 'household_transmission', line 43, column 33 to column 61)",
+  " (in 'household_transmission', line 44, column 2 to column 31)",
+  " (in 'household_transmission', line 44, column 33 to column 61)",
+  " (in 'household_transmission', line 45, column 2 to column 32)",
+  " (in 'household_transmission', line 45, column 33 to column 62)",
+  " (in 'household_transmission', line 50, column 20 to column 21)",
+  " (in 'household_transmission', line 50, column 2 to column 23)",
+  " (in 'household_transmission', line 52, column 4 to column 25)",
+  " (in 'household_transmission', line 55, column 8 to column 29)",
+  " (in 'household_transmission', line 56, column 8 to column 14)",
+  " (in 'household_transmission', line 54, column 24 to line 57, column 7)",
+  " (in 'household_transmission', line 54, column 6 to line 57, column 7)",
+  " (in 'household_transmission', line 53, column 31 to line 58, column 5)",
+  " (in 'household_transmission', line 53, column 4 to line 58, column 5)",
+  " (in 'household_transmission', line 51, column 17 to line 59, column 3)",
+  " (in 'household_transmission', line 51, column 2 to line 59, column 3)",
+  " (in 'household_transmission', line 63, column 9 to column 12)",
+  " (in 'household_transmission', line 64, column 9 to column 12)",
+  " (in 'household_transmission', line 75, column 9 to column 15)",
+  " (in 'household_transmission', line 76, column 9 to column 14)",
+  " (in 'household_transmission', line 80, column 18 to column 19)",
+  " (in 'household_transmission', line 81, column 18 to column 19)",
+  " (in 'household_transmission', line 82, column 9 to column 10)",
+  " (in 'household_transmission', line 100, column 9 to column 10)",
+  " (in 'household_transmission', line 100, column 12 to column 13)"};
 #include <stan_meta_header.hpp>
 class model_household_transmission final : public model_base_crtp<model_household_transmission> {
 private:
@@ -144,27 +245,56 @@ private:
   int R;
   double delta;
   int use_vl_data;
-  int use_ab_susc;
-  int use_ab_inf;
+  int vl_type;
   int use_curve_logic;
   std::vector<int> hh_id;
   std::vector<int> role_id;
   std::vector<std::vector<int>> I;
-  std::vector<std::vector<int>> time_since_infection;
-  std::vector<std::vector<double>> V_raw;
-  std::vector<int> has_ab;
-  double alpha_comm_by_role;
-  std::vector<int> hh_size;
-  int hh_max_size;
-  std::vector<std::vector<int>> hh_members;
+  std::vector<std::vector<int>> Y;
+  std::vector<std::vector<double>> V;
+  std::vector<int> start_risk;
+  std::vector<int> hh_size_people;
+  int n_contacts;
+  std::vector<int> contact_src;
+  std::vector<int> contact_tgt;
+  std::vector<double> contact_w;
+  Eigen::Matrix<double,-1,-1> seasonal_forcing_mat_data__;
   double reference_phi;
   double reference_kappa;
-  Eigen::Matrix<double,-1,-1> seasonal_forcing_mat_data__;
-  Eigen::Matrix<double,-1,1> g_profile_data__;
+  int K_susc;
+  Eigen::Matrix<double,-1,-1> X_susc_data__;
+  int K_inf;
+  Eigen::Matrix<double,-1,-1> X_inf_data__;
+  int prior_beta1_type;
+  Eigen::Matrix<double,-1,1> prior_beta1_params_data__;
+  int prior_beta2_type;
+  Eigen::Matrix<double,-1,1> prior_beta2_params_data__;
+  int prior_alpha_type;
+  Eigen::Matrix<double,-1,1> prior_alpha_params_data__;
+  int prior_cov_type;
+  Eigen::Matrix<double,-1,1> prior_cov_params_data__;
+  int prior_shape_type;
+  Eigen::Matrix<double,-1,1> prior_shape_params_data__;
+  int prior_rate_type;
+  Eigen::Matrix<double,-1,1> prior_rate_params_data__;
+  int prior_ct50_type;
+  Eigen::Matrix<double,-1,1> prior_ct50_params_data__;
+  int prior_slope_type;
+  Eigen::Matrix<double,-1,1> prior_slope_params_data__;
+  std::vector<int> infection_day;
   int log_phi_by_role_raw_1dim__;
   int log_kappa_by_role_raw_1dim__;
   Eigen::Map<Eigen::Matrix<double,-1,-1>> seasonal_forcing_mat{nullptr, 0, 0};
-  Eigen::Map<Eigen::Matrix<double,-1,1>> g_profile{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,-1>> X_susc{nullptr, 0, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,-1>> X_inf{nullptr, 0, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_beta1_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_beta2_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_alpha_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_cov_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_shape_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_rate_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_ct50_params{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double,-1,1>> prior_slope_params{nullptr, 0};
 public:
   ~model_household_transmission() {}
   model_household_transmission(stan::io::var_context& context__, unsigned int
@@ -186,307 +316,277 @@ public:
     try {
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
-      current_statement__ = 79;
+      current_statement__ = 141;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 79;
+      current_statement__ = 141;
       N = context__.vals_i("N")[(1 - 1)];
-      current_statement__ = 79;
+      current_statement__ = 141;
       stan::math::check_greater_or_equal(function__, "N", N, 1);
-      current_statement__ = 80;
+      current_statement__ = 142;
       context__.validate_dims("data initialization", "T", "int",
         std::vector<size_t>{});
       T = std::numeric_limits<int>::min();
-      current_statement__ = 80;
+      current_statement__ = 142;
       T = context__.vals_i("T")[(1 - 1)];
-      current_statement__ = 80;
+      current_statement__ = 142;
       stan::math::check_greater_or_equal(function__, "T", T, 1);
-      current_statement__ = 81;
+      current_statement__ = 143;
       context__.validate_dims("data initialization", "H", "int",
         std::vector<size_t>{});
       H = std::numeric_limits<int>::min();
-      current_statement__ = 81;
+      current_statement__ = 143;
       H = context__.vals_i("H")[(1 - 1)];
-      current_statement__ = 81;
+      current_statement__ = 143;
       stan::math::check_greater_or_equal(function__, "H", H, 1);
-      current_statement__ = 82;
+      current_statement__ = 144;
       context__.validate_dims("data initialization", "R", "int",
         std::vector<size_t>{});
       R = std::numeric_limits<int>::min();
-      current_statement__ = 82;
+      current_statement__ = 144;
       R = context__.vals_i("R")[(1 - 1)];
-      current_statement__ = 82;
+      current_statement__ = 144;
       stan::math::check_greater_or_equal(function__, "R", R, 1);
-      current_statement__ = 83;
+      current_statement__ = 145;
       context__.validate_dims("data initialization", "delta", "double",
         std::vector<size_t>{});
       delta = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 83;
+      current_statement__ = 145;
       delta = context__.vals_r("delta")[(1 - 1)];
-      current_statement__ = 84;
+      current_statement__ = 146;
       context__.validate_dims("data initialization", "use_vl_data", "int",
         std::vector<size_t>{});
       use_vl_data = std::numeric_limits<int>::min();
-      current_statement__ = 84;
+      current_statement__ = 146;
       use_vl_data = context__.vals_i("use_vl_data")[(1 - 1)];
-      current_statement__ = 84;
+      current_statement__ = 146;
       stan::math::check_greater_or_equal(function__, "use_vl_data",
         use_vl_data, 0);
-      current_statement__ = 84;
+      current_statement__ = 146;
       stan::math::check_less_or_equal(function__, "use_vl_data", use_vl_data,
         1);
-      current_statement__ = 85;
-      context__.validate_dims("data initialization", "use_ab_susc", "int",
+      current_statement__ = 147;
+      context__.validate_dims("data initialization", "vl_type", "int",
         std::vector<size_t>{});
-      use_ab_susc = std::numeric_limits<int>::min();
-      current_statement__ = 85;
-      use_ab_susc = context__.vals_i("use_ab_susc")[(1 - 1)];
-      current_statement__ = 85;
-      stan::math::check_greater_or_equal(function__, "use_ab_susc",
-        use_ab_susc, 0);
-      current_statement__ = 85;
-      stan::math::check_less_or_equal(function__, "use_ab_susc", use_ab_susc,
-        1);
-      current_statement__ = 86;
-      context__.validate_dims("data initialization", "use_ab_inf", "int",
-        std::vector<size_t>{});
-      use_ab_inf = std::numeric_limits<int>::min();
-      current_statement__ = 86;
-      use_ab_inf = context__.vals_i("use_ab_inf")[(1 - 1)];
-      current_statement__ = 86;
-      stan::math::check_greater_or_equal(function__, "use_ab_inf",
-        use_ab_inf, 0);
-      current_statement__ = 86;
-      stan::math::check_less_or_equal(function__, "use_ab_inf", use_ab_inf, 1);
-      current_statement__ = 87;
+      vl_type = std::numeric_limits<int>::min();
+      current_statement__ = 147;
+      vl_type = context__.vals_i("vl_type")[(1 - 1)];
+      current_statement__ = 147;
+      stan::math::check_greater_or_equal(function__, "vl_type", vl_type, 0);
+      current_statement__ = 147;
+      stan::math::check_less_or_equal(function__, "vl_type", vl_type, 1);
+      current_statement__ = 148;
       context__.validate_dims("data initialization", "use_curve_logic",
         "int", std::vector<size_t>{});
       use_curve_logic = std::numeric_limits<int>::min();
-      current_statement__ = 87;
+      current_statement__ = 148;
       use_curve_logic = context__.vals_i("use_curve_logic")[(1 - 1)];
-      current_statement__ = 87;
+      current_statement__ = 148;
       stan::math::check_greater_or_equal(function__, "use_curve_logic",
         use_curve_logic, 0);
-      current_statement__ = 87;
+      current_statement__ = 148;
       stan::math::check_less_or_equal(function__, "use_curve_logic",
         use_curve_logic, 1);
-      current_statement__ = 88;
+      current_statement__ = 149;
       stan::math::validate_non_negative_index("hh_id", "N", N);
-      current_statement__ = 89;
+      current_statement__ = 150;
       context__.validate_dims("data initialization", "hh_id", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       hh_id = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 89;
+      current_statement__ = 150;
       hh_id = context__.vals_i("hh_id");
-      current_statement__ = 89;
+      current_statement__ = 150;
       stan::math::check_greater_or_equal(function__, "hh_id", hh_id, 1);
-      current_statement__ = 89;
+      current_statement__ = 150;
       stan::math::check_less_or_equal(function__, "hh_id", hh_id, H);
-      current_statement__ = 90;
+      current_statement__ = 151;
       stan::math::validate_non_negative_index("role_id", "N", N);
-      current_statement__ = 91;
+      current_statement__ = 152;
       context__.validate_dims("data initialization", "role_id", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       role_id = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 91;
+      current_statement__ = 152;
       role_id = context__.vals_i("role_id");
-      current_statement__ = 91;
+      current_statement__ = 152;
       stan::math::check_greater_or_equal(function__, "role_id", role_id, 1);
-      current_statement__ = 91;
+      current_statement__ = 152;
       stan::math::check_less_or_equal(function__, "role_id", role_id, R);
-      current_statement__ = 92;
+      current_statement__ = 153;
       stan::math::validate_non_negative_index("I", "N", N);
-      current_statement__ = 93;
+      current_statement__ = 154;
       stan::math::validate_non_negative_index("I", "T", T);
-      current_statement__ = 94;
+      current_statement__ = 155;
       context__.validate_dims("data initialization", "I", "int",
         std::vector<size_t>{static_cast<size_t>(N), static_cast<size_t>(T)});
       I = std::vector<std::vector<int>>(N,
             std::vector<int>(T, std::numeric_limits<int>::min()));
       {
         std::vector<int> I_flat__;
-        current_statement__ = 94;
+        current_statement__ = 155;
         I_flat__ = context__.vals_i("I");
-        current_statement__ = 94;
+        current_statement__ = 155;
         pos__ = 1;
-        current_statement__ = 94;
+        current_statement__ = 155;
         for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
-          current_statement__ = 94;
+          current_statement__ = 155;
           for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
-            current_statement__ = 94;
+            current_statement__ = 155;
             stan::model::assign(I, I_flat__[(pos__ - 1)],
               "assigning variable I", stan::model::index_uni(sym2__),
               stan::model::index_uni(sym1__));
-            current_statement__ = 94;
+            current_statement__ = 155;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 94;
+      current_statement__ = 155;
       stan::math::check_greater_or_equal(function__, "I", I, 0);
-      current_statement__ = 94;
+      current_statement__ = 155;
       stan::math::check_less_or_equal(function__, "I", I, 1);
-      current_statement__ = 95;
-      stan::math::validate_non_negative_index("time_since_infection", "N", N);
-      current_statement__ = 96;
-      stan::math::validate_non_negative_index("time_since_infection", "T", T);
-      current_statement__ = 97;
-      context__.validate_dims("data initialization", "time_since_infection",
-        "int",
+      current_statement__ = 156;
+      stan::math::validate_non_negative_index("Y", "N", N);
+      current_statement__ = 157;
+      stan::math::validate_non_negative_index("Y", "T", T);
+      current_statement__ = 158;
+      context__.validate_dims("data initialization", "Y", "int",
         std::vector<size_t>{static_cast<size_t>(N), static_cast<size_t>(T)});
-      time_since_infection = std::vector<std::vector<int>>(N,
-                               std::vector<int>(T,
-                                 std::numeric_limits<int>::min()));
+      Y = std::vector<std::vector<int>>(N,
+            std::vector<int>(T, std::numeric_limits<int>::min()));
       {
-        std::vector<int> time_since_infection_flat__;
-        current_statement__ = 97;
-        time_since_infection_flat__ = context__.vals_i("time_since_infection");
-        current_statement__ = 97;
+        std::vector<int> Y_flat__;
+        current_statement__ = 158;
+        Y_flat__ = context__.vals_i("Y");
+        current_statement__ = 158;
         pos__ = 1;
-        current_statement__ = 97;
+        current_statement__ = 158;
         for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
-          current_statement__ = 97;
+          current_statement__ = 158;
           for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
-            current_statement__ = 97;
-            stan::model::assign(time_since_infection,
-              time_since_infection_flat__[(pos__ - 1)],
-              "assigning variable time_since_infection",
-              stan::model::index_uni(sym2__), stan::model::index_uni(sym1__));
-            current_statement__ = 97;
-            pos__ = (pos__ + 1);
-          }
-        }
-      }
-      current_statement__ = 97;
-      stan::math::check_greater_or_equal(function__, "time_since_infection",
-        time_since_infection, -1);
-      current_statement__ = 98;
-      stan::math::validate_non_negative_index("V_raw", "N", N);
-      current_statement__ = 99;
-      stan::math::validate_non_negative_index("V_raw", "T", T);
-      current_statement__ = 100;
-      context__.validate_dims("data initialization", "V_raw", "double",
-        std::vector<size_t>{static_cast<size_t>(N), static_cast<size_t>(T)});
-      V_raw = std::vector<std::vector<double>>(N,
-                std::vector<double>(T,
-                  std::numeric_limits<double>::quiet_NaN()));
-      {
-        std::vector<local_scalar_t__> V_raw_flat__;
-        current_statement__ = 100;
-        V_raw_flat__ = context__.vals_r("V_raw");
-        current_statement__ = 100;
-        pos__ = 1;
-        current_statement__ = 100;
-        for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
-          current_statement__ = 100;
-          for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
-            current_statement__ = 100;
-            stan::model::assign(V_raw, V_raw_flat__[(pos__ - 1)],
-              "assigning variable V_raw", stan::model::index_uni(sym2__),
+            current_statement__ = 158;
+            stan::model::assign(Y, Y_flat__[(pos__ - 1)],
+              "assigning variable Y", stan::model::index_uni(sym2__),
               stan::model::index_uni(sym1__));
-            current_statement__ = 100;
+            current_statement__ = 158;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 101;
-      stan::math::validate_non_negative_index("has_ab", "N", N);
-      current_statement__ = 102;
-      context__.validate_dims("data initialization", "has_ab", "int",
-        std::vector<size_t>{static_cast<size_t>(N)});
-      has_ab = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 102;
-      has_ab = context__.vals_i("has_ab");
-      current_statement__ = 102;
-      stan::math::check_greater_or_equal(function__, "has_ab", has_ab, 0);
-      current_statement__ = 102;
-      stan::math::check_less_or_equal(function__, "has_ab", has_ab, 1);
-      current_statement__ = 103;
-      context__.validate_dims("data initialization", "alpha_comm_by_role",
-        "double", std::vector<size_t>{});
-      alpha_comm_by_role = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 103;
-      alpha_comm_by_role = context__.vals_r("alpha_comm_by_role")[(1 - 1)];
-      current_statement__ = 103;
-      stan::math::check_greater_or_equal(function__, "alpha_comm_by_role",
-        alpha_comm_by_role, 0);
-      current_statement__ = 104;
-      stan::math::validate_non_negative_index("hh_size", "H", H);
-      current_statement__ = 105;
-      context__.validate_dims("data initialization", "hh_size", "int",
-        std::vector<size_t>{static_cast<size_t>(H)});
-      hh_size = std::vector<int>(H, std::numeric_limits<int>::min());
-      current_statement__ = 105;
-      hh_size = context__.vals_i("hh_size");
-      current_statement__ = 105;
-      stan::math::check_greater_or_equal(function__, "hh_size", hh_size, 1);
-      current_statement__ = 106;
-      context__.validate_dims("data initialization", "hh_max_size", "int",
-        std::vector<size_t>{});
-      hh_max_size = std::numeric_limits<int>::min();
-      current_statement__ = 106;
-      hh_max_size = context__.vals_i("hh_max_size")[(1 - 1)];
-      current_statement__ = 106;
-      stan::math::check_greater_or_equal(function__, "hh_max_size",
-        hh_max_size, 1);
-      current_statement__ = 107;
-      stan::math::validate_non_negative_index("hh_members", "H", H);
-      current_statement__ = 108;
-      stan::math::validate_non_negative_index("hh_members", "hh_max_size",
-        hh_max_size);
-      current_statement__ = 109;
-      context__.validate_dims("data initialization", "hh_members", "int",
-        std::vector<size_t>{static_cast<size_t>(H),
-          static_cast<size_t>(hh_max_size)});
-      hh_members = std::vector<std::vector<int>>(H,
-                     std::vector<int>(hh_max_size,
-                       std::numeric_limits<int>::min()));
+      current_statement__ = 158;
+      stan::math::check_greater_or_equal(function__, "Y", Y, 0);
+      current_statement__ = 158;
+      stan::math::check_less_or_equal(function__, "Y", Y, 1);
+      current_statement__ = 159;
+      stan::math::validate_non_negative_index("V", "N", N);
+      current_statement__ = 160;
+      stan::math::validate_non_negative_index("V", "T", T);
+      current_statement__ = 161;
+      context__.validate_dims("data initialization", "V", "double",
+        std::vector<size_t>{static_cast<size_t>(N), static_cast<size_t>(T)});
+      V = std::vector<std::vector<double>>(N,
+            std::vector<double>(T, std::numeric_limits<double>::quiet_NaN()));
       {
-        std::vector<int> hh_members_flat__;
-        current_statement__ = 109;
-        hh_members_flat__ = context__.vals_i("hh_members");
-        current_statement__ = 109;
+        std::vector<local_scalar_t__> V_flat__;
+        current_statement__ = 161;
+        V_flat__ = context__.vals_r("V");
+        current_statement__ = 161;
         pos__ = 1;
-        current_statement__ = 109;
-        for (int sym1__ = 1; sym1__ <= hh_max_size; ++sym1__) {
-          current_statement__ = 109;
-          for (int sym2__ = 1; sym2__ <= H; ++sym2__) {
-            current_statement__ = 109;
-            stan::model::assign(hh_members, hh_members_flat__[(pos__ - 1)],
-              "assigning variable hh_members",
-              stan::model::index_uni(sym2__), stan::model::index_uni(sym1__));
-            current_statement__ = 109;
+        current_statement__ = 161;
+        for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
+          current_statement__ = 161;
+          for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
+            current_statement__ = 161;
+            stan::model::assign(V, V_flat__[(pos__ - 1)],
+              "assigning variable V", stan::model::index_uni(sym2__),
+              stan::model::index_uni(sym1__));
+            current_statement__ = 161;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 109;
-      stan::math::check_greater_or_equal(function__, "hh_members",
-        hh_members, 0);
-      current_statement__ = 110;
-      context__.validate_dims("data initialization", "reference_phi",
-        "double", std::vector<size_t>{});
-      reference_phi = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 110;
-      reference_phi = context__.vals_r("reference_phi")[(1 - 1)];
-      current_statement__ = 110;
-      stan::math::check_greater_or_equal(function__, "reference_phi",
-        reference_phi, 0);
-      current_statement__ = 111;
-      context__.validate_dims("data initialization", "reference_kappa",
-        "double", std::vector<size_t>{});
-      reference_kappa = std::numeric_limits<double>::quiet_NaN();
-      current_statement__ = 111;
-      reference_kappa = context__.vals_r("reference_kappa")[(1 - 1)];
-      current_statement__ = 111;
-      stan::math::check_greater_or_equal(function__, "reference_kappa",
-        reference_kappa, 0);
-      current_statement__ = 112;
+      current_statement__ = 162;
+      stan::math::validate_non_negative_index("start_risk", "N", N);
+      current_statement__ = 163;
+      context__.validate_dims("data initialization", "start_risk", "int",
+        std::vector<size_t>{static_cast<size_t>(N)});
+      start_risk = std::vector<int>(N, std::numeric_limits<int>::min());
+      current_statement__ = 163;
+      start_risk = context__.vals_i("start_risk");
+      current_statement__ = 163;
+      stan::math::check_greater_or_equal(function__, "start_risk",
+        start_risk, 1);
+      current_statement__ = 163;
+      stan::math::check_less_or_equal(function__, "start_risk", start_risk, T);
+      current_statement__ = 164;
+      stan::math::validate_non_negative_index("hh_size_people", "H", H);
+      current_statement__ = 165;
+      context__.validate_dims("data initialization", "hh_size_people", "int",
+        std::vector<size_t>{static_cast<size_t>(H)});
+      hh_size_people = std::vector<int>(H, std::numeric_limits<int>::min());
+      current_statement__ = 165;
+      hh_size_people = context__.vals_i("hh_size_people");
+      current_statement__ = 165;
+      stan::math::check_greater_or_equal(function__, "hh_size_people",
+        hh_size_people, 1);
+      current_statement__ = 166;
+      context__.validate_dims("data initialization", "n_contacts", "int",
+        std::vector<size_t>{});
+      n_contacts = std::numeric_limits<int>::min();
+      current_statement__ = 166;
+      n_contacts = context__.vals_i("n_contacts")[(1 - 1)];
+      current_statement__ = 166;
+      stan::math::check_greater_or_equal(function__, "n_contacts",
+        n_contacts, 0);
+      current_statement__ = 167;
+      stan::math::validate_non_negative_index("contact_src", "n_contacts",
+        n_contacts);
+      current_statement__ = 168;
+      context__.validate_dims("data initialization", "contact_src", "int",
+        std::vector<size_t>{static_cast<size_t>(n_contacts)});
+      contact_src = std::vector<int>(n_contacts,
+                      std::numeric_limits<int>::min());
+      current_statement__ = 168;
+      contact_src = context__.vals_i("contact_src");
+      current_statement__ = 168;
+      stan::math::check_greater_or_equal(function__, "contact_src",
+        contact_src, 1);
+      current_statement__ = 168;
+      stan::math::check_less_or_equal(function__, "contact_src", contact_src,
+        N);
+      current_statement__ = 169;
+      stan::math::validate_non_negative_index("contact_tgt", "n_contacts",
+        n_contacts);
+      current_statement__ = 170;
+      context__.validate_dims("data initialization", "contact_tgt", "int",
+        std::vector<size_t>{static_cast<size_t>(n_contacts)});
+      contact_tgt = std::vector<int>(n_contacts,
+                      std::numeric_limits<int>::min());
+      current_statement__ = 170;
+      contact_tgt = context__.vals_i("contact_tgt");
+      current_statement__ = 170;
+      stan::math::check_greater_or_equal(function__, "contact_tgt",
+        contact_tgt, 1);
+      current_statement__ = 170;
+      stan::math::check_less_or_equal(function__, "contact_tgt", contact_tgt,
+        N);
+      current_statement__ = 171;
+      stan::math::validate_non_negative_index("contact_w", "n_contacts",
+        n_contacts);
+      current_statement__ = 172;
+      context__.validate_dims("data initialization", "contact_w", "double",
+        std::vector<size_t>{static_cast<size_t>(n_contacts)});
+      contact_w = std::vector<double>(n_contacts,
+                    std::numeric_limits<double>::quiet_NaN());
+      current_statement__ = 172;
+      contact_w = context__.vals_r("contact_w");
+      current_statement__ = 172;
+      stan::math::check_greater_or_equal(function__, "contact_w", contact_w,
+        0);
+      current_statement__ = 173;
       stan::math::validate_non_negative_index("seasonal_forcing_mat", "T", T);
-      current_statement__ = 113;
+      current_statement__ = 174;
       stan::math::validate_non_negative_index("seasonal_forcing_mat", "R", R);
-      current_statement__ = 114;
+      current_statement__ = 175;
       context__.validate_dims("data initialization", "seasonal_forcing_mat",
         "double",
         std::vector<size_t>{static_cast<size_t>(T), static_cast<size_t>(R)});
@@ -498,71 +598,452 @@ public:
         T, R);
       {
         std::vector<local_scalar_t__> seasonal_forcing_mat_flat__;
-        current_statement__ = 114;
+        current_statement__ = 175;
         seasonal_forcing_mat_flat__ = context__.vals_r("seasonal_forcing_mat");
-        current_statement__ = 114;
+        current_statement__ = 175;
         pos__ = 1;
-        current_statement__ = 114;
+        current_statement__ = 175;
         for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
-          current_statement__ = 114;
+          current_statement__ = 175;
           for (int sym2__ = 1; sym2__ <= T; ++sym2__) {
-            current_statement__ = 114;
+            current_statement__ = 175;
             stan::model::assign(seasonal_forcing_mat,
               seasonal_forcing_mat_flat__[(pos__ - 1)],
               "assigning variable seasonal_forcing_mat",
               stan::model::index_uni(sym2__), stan::model::index_uni(sym1__));
-            current_statement__ = 114;
+            current_statement__ = 175;
             pos__ = (pos__ + 1);
           }
         }
       }
-      current_statement__ = 115;
-      stan::math::validate_non_negative_index("g_profile", "T", T);
-      current_statement__ = 116;
-      context__.validate_dims("data initialization", "g_profile", "double",
-        std::vector<size_t>{static_cast<size_t>(T)});
-      g_profile_data__ = Eigen::Matrix<double,-1,1>::Constant(T,
-                           std::numeric_limits<double>::quiet_NaN());
-      new (&g_profile)
-        Eigen::Map<Eigen::Matrix<double,-1,1>>(g_profile_data__.data(), T);
+      current_statement__ = 176;
+      context__.validate_dims("data initialization", "reference_phi",
+        "double", std::vector<size_t>{});
+      reference_phi = std::numeric_limits<double>::quiet_NaN();
+      current_statement__ = 176;
+      reference_phi = context__.vals_r("reference_phi")[(1 - 1)];
+      current_statement__ = 176;
+      stan::math::check_greater_or_equal(function__, "reference_phi",
+        reference_phi, 0);
+      current_statement__ = 177;
+      context__.validate_dims("data initialization", "reference_kappa",
+        "double", std::vector<size_t>{});
+      reference_kappa = std::numeric_limits<double>::quiet_NaN();
+      current_statement__ = 177;
+      reference_kappa = context__.vals_r("reference_kappa")[(1 - 1)];
+      current_statement__ = 177;
+      stan::math::check_greater_or_equal(function__, "reference_kappa",
+        reference_kappa, 0);
+      current_statement__ = 178;
+      context__.validate_dims("data initialization", "K_susc", "int",
+        std::vector<size_t>{});
+      K_susc = std::numeric_limits<int>::min();
+      current_statement__ = 178;
+      K_susc = context__.vals_i("K_susc")[(1 - 1)];
+      current_statement__ = 178;
+      stan::math::check_greater_or_equal(function__, "K_susc", K_susc, 0);
+      current_statement__ = 179;
+      stan::math::validate_non_negative_index("X_susc", "N", N);
+      current_statement__ = 180;
+      stan::math::validate_non_negative_index("X_susc", "K_susc", K_susc);
+      current_statement__ = 181;
+      context__.validate_dims("data initialization", "X_susc", "double",
+        std::vector<size_t>{static_cast<size_t>(N),
+          static_cast<size_t>(K_susc)});
+      X_susc_data__ = Eigen::Matrix<double,-1,-1>::Constant(N, K_susc,
+                        std::numeric_limits<double>::quiet_NaN());
+      new (&X_susc)
+        Eigen::Map<Eigen::Matrix<double,-1,-1>>(X_susc_data__.data(), N,
+        K_susc);
       {
-        std::vector<local_scalar_t__> g_profile_flat__;
-        current_statement__ = 116;
-        g_profile_flat__ = context__.vals_r("g_profile");
-        current_statement__ = 116;
+        std::vector<local_scalar_t__> X_susc_flat__;
+        current_statement__ = 181;
+        X_susc_flat__ = context__.vals_r("X_susc");
+        current_statement__ = 181;
         pos__ = 1;
-        current_statement__ = 116;
-        for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
-          current_statement__ = 116;
-          stan::model::assign(g_profile, g_profile_flat__[(pos__ - 1)],
-            "assigning variable g_profile", stan::model::index_uni(sym1__));
-          current_statement__ = 116;
+        current_statement__ = 181;
+        for (int sym1__ = 1; sym1__ <= K_susc; ++sym1__) {
+          current_statement__ = 181;
+          for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
+            current_statement__ = 181;
+            stan::model::assign(X_susc, X_susc_flat__[(pos__ - 1)],
+              "assigning variable X_susc", stan::model::index_uni(sym2__),
+              stan::model::index_uni(sym1__));
+            current_statement__ = 181;
+            pos__ = (pos__ + 1);
+          }
+        }
+      }
+      current_statement__ = 182;
+      context__.validate_dims("data initialization", "K_inf", "int",
+        std::vector<size_t>{});
+      K_inf = std::numeric_limits<int>::min();
+      current_statement__ = 182;
+      K_inf = context__.vals_i("K_inf")[(1 - 1)];
+      current_statement__ = 182;
+      stan::math::check_greater_or_equal(function__, "K_inf", K_inf, 0);
+      current_statement__ = 183;
+      stan::math::validate_non_negative_index("X_inf", "N", N);
+      current_statement__ = 184;
+      stan::math::validate_non_negative_index("X_inf", "K_inf", K_inf);
+      current_statement__ = 185;
+      context__.validate_dims("data initialization", "X_inf", "double",
+        std::vector<size_t>{static_cast<size_t>(N),
+          static_cast<size_t>(K_inf)});
+      X_inf_data__ = Eigen::Matrix<double,-1,-1>::Constant(N, K_inf,
+                       std::numeric_limits<double>::quiet_NaN());
+      new (&X_inf)
+        Eigen::Map<Eigen::Matrix<double,-1,-1>>(X_inf_data__.data(), N,
+        K_inf);
+      {
+        std::vector<local_scalar_t__> X_inf_flat__;
+        current_statement__ = 185;
+        X_inf_flat__ = context__.vals_r("X_inf");
+        current_statement__ = 185;
+        pos__ = 1;
+        current_statement__ = 185;
+        for (int sym1__ = 1; sym1__ <= K_inf; ++sym1__) {
+          current_statement__ = 185;
+          for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
+            current_statement__ = 185;
+            stan::model::assign(X_inf, X_inf_flat__[(pos__ - 1)],
+              "assigning variable X_inf", stan::model::index_uni(sym2__),
+              stan::model::index_uni(sym1__));
+            current_statement__ = 185;
+            pos__ = (pos__ + 1);
+          }
+        }
+      }
+      current_statement__ = 186;
+      context__.validate_dims("data initialization", "prior_beta1_type",
+        "int", std::vector<size_t>{});
+      prior_beta1_type = std::numeric_limits<int>::min();
+      current_statement__ = 186;
+      prior_beta1_type = context__.vals_i("prior_beta1_type")[(1 - 1)];
+      current_statement__ = 186;
+      stan::math::check_greater_or_equal(function__, "prior_beta1_type",
+        prior_beta1_type, 0);
+      current_statement__ = 187;
+      context__.validate_dims("data initialization", "prior_beta1_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_beta1_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                    std::numeric_limits<double>::quiet_NaN());
+      new (&prior_beta1_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_beta1_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_beta1_params_flat__;
+        current_statement__ = 187;
+        prior_beta1_params_flat__ = context__.vals_r("prior_beta1_params");
+        current_statement__ = 187;
+        pos__ = 1;
+        current_statement__ = 187;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 187;
+          stan::model::assign(prior_beta1_params,
+            prior_beta1_params_flat__[(pos__ - 1)],
+            "assigning variable prior_beta1_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 187;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 117;
+      current_statement__ = 188;
+      context__.validate_dims("data initialization", "prior_beta2_type",
+        "int", std::vector<size_t>{});
+      prior_beta2_type = std::numeric_limits<int>::min();
+      current_statement__ = 188;
+      prior_beta2_type = context__.vals_i("prior_beta2_type")[(1 - 1)];
+      current_statement__ = 188;
+      stan::math::check_greater_or_equal(function__, "prior_beta2_type",
+        prior_beta2_type, 0);
+      current_statement__ = 189;
+      context__.validate_dims("data initialization", "prior_beta2_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_beta2_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                    std::numeric_limits<double>::quiet_NaN());
+      new (&prior_beta2_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_beta2_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_beta2_params_flat__;
+        current_statement__ = 189;
+        prior_beta2_params_flat__ = context__.vals_r("prior_beta2_params");
+        current_statement__ = 189;
+        pos__ = 1;
+        current_statement__ = 189;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 189;
+          stan::model::assign(prior_beta2_params,
+            prior_beta2_params_flat__[(pos__ - 1)],
+            "assigning variable prior_beta2_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 189;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 190;
+      context__.validate_dims("data initialization", "prior_alpha_type",
+        "int", std::vector<size_t>{});
+      prior_alpha_type = std::numeric_limits<int>::min();
+      current_statement__ = 190;
+      prior_alpha_type = context__.vals_i("prior_alpha_type")[(1 - 1)];
+      current_statement__ = 190;
+      stan::math::check_greater_or_equal(function__, "prior_alpha_type",
+        prior_alpha_type, 0);
+      current_statement__ = 191;
+      context__.validate_dims("data initialization", "prior_alpha_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_alpha_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                    std::numeric_limits<double>::quiet_NaN());
+      new (&prior_alpha_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_alpha_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_alpha_params_flat__;
+        current_statement__ = 191;
+        prior_alpha_params_flat__ = context__.vals_r("prior_alpha_params");
+        current_statement__ = 191;
+        pos__ = 1;
+        current_statement__ = 191;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 191;
+          stan::model::assign(prior_alpha_params,
+            prior_alpha_params_flat__[(pos__ - 1)],
+            "assigning variable prior_alpha_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 191;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 192;
+      context__.validate_dims("data initialization", "prior_cov_type", "int",
+        std::vector<size_t>{});
+      prior_cov_type = std::numeric_limits<int>::min();
+      current_statement__ = 192;
+      prior_cov_type = context__.vals_i("prior_cov_type")[(1 - 1)];
+      current_statement__ = 192;
+      stan::math::check_greater_or_equal(function__, "prior_cov_type",
+        prior_cov_type, 0);
+      current_statement__ = 193;
+      context__.validate_dims("data initialization", "prior_cov_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_cov_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                  std::numeric_limits<double>::quiet_NaN());
+      new (&prior_cov_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_cov_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_cov_params_flat__;
+        current_statement__ = 193;
+        prior_cov_params_flat__ = context__.vals_r("prior_cov_params");
+        current_statement__ = 193;
+        pos__ = 1;
+        current_statement__ = 193;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 193;
+          stan::model::assign(prior_cov_params,
+            prior_cov_params_flat__[(pos__ - 1)],
+            "assigning variable prior_cov_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 193;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 194;
+      context__.validate_dims("data initialization", "prior_shape_type",
+        "int", std::vector<size_t>{});
+      prior_shape_type = std::numeric_limits<int>::min();
+      current_statement__ = 194;
+      prior_shape_type = context__.vals_i("prior_shape_type")[(1 - 1)];
+      current_statement__ = 194;
+      stan::math::check_greater_or_equal(function__, "prior_shape_type",
+        prior_shape_type, 0);
+      current_statement__ = 195;
+      context__.validate_dims("data initialization", "prior_shape_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_shape_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                    std::numeric_limits<double>::quiet_NaN());
+      new (&prior_shape_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_shape_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_shape_params_flat__;
+        current_statement__ = 195;
+        prior_shape_params_flat__ = context__.vals_r("prior_shape_params");
+        current_statement__ = 195;
+        pos__ = 1;
+        current_statement__ = 195;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 195;
+          stan::model::assign(prior_shape_params,
+            prior_shape_params_flat__[(pos__ - 1)],
+            "assigning variable prior_shape_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 195;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 196;
+      context__.validate_dims("data initialization", "prior_rate_type",
+        "int", std::vector<size_t>{});
+      prior_rate_type = std::numeric_limits<int>::min();
+      current_statement__ = 196;
+      prior_rate_type = context__.vals_i("prior_rate_type")[(1 - 1)];
+      current_statement__ = 196;
+      stan::math::check_greater_or_equal(function__, "prior_rate_type",
+        prior_rate_type, 0);
+      current_statement__ = 197;
+      context__.validate_dims("data initialization", "prior_rate_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_rate_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                   std::numeric_limits<double>::quiet_NaN());
+      new (&prior_rate_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_rate_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_rate_params_flat__;
+        current_statement__ = 197;
+        prior_rate_params_flat__ = context__.vals_r("prior_rate_params");
+        current_statement__ = 197;
+        pos__ = 1;
+        current_statement__ = 197;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 197;
+          stan::model::assign(prior_rate_params,
+            prior_rate_params_flat__[(pos__ - 1)],
+            "assigning variable prior_rate_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 197;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 198;
+      context__.validate_dims("data initialization", "prior_ct50_type",
+        "int", std::vector<size_t>{});
+      prior_ct50_type = std::numeric_limits<int>::min();
+      current_statement__ = 198;
+      prior_ct50_type = context__.vals_i("prior_ct50_type")[(1 - 1)];
+      current_statement__ = 198;
+      stan::math::check_greater_or_equal(function__, "prior_ct50_type",
+        prior_ct50_type, 0);
+      current_statement__ = 199;
+      context__.validate_dims("data initialization", "prior_ct50_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_ct50_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                   std::numeric_limits<double>::quiet_NaN());
+      new (&prior_ct50_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_ct50_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_ct50_params_flat__;
+        current_statement__ = 199;
+        prior_ct50_params_flat__ = context__.vals_r("prior_ct50_params");
+        current_statement__ = 199;
+        pos__ = 1;
+        current_statement__ = 199;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 199;
+          stan::model::assign(prior_ct50_params,
+            prior_ct50_params_flat__[(pos__ - 1)],
+            "assigning variable prior_ct50_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 199;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 200;
+      context__.validate_dims("data initialization", "prior_slope_type",
+        "int", std::vector<size_t>{});
+      prior_slope_type = std::numeric_limits<int>::min();
+      current_statement__ = 200;
+      prior_slope_type = context__.vals_i("prior_slope_type")[(1 - 1)];
+      current_statement__ = 200;
+      stan::math::check_greater_or_equal(function__, "prior_slope_type",
+        prior_slope_type, 0);
+      current_statement__ = 201;
+      context__.validate_dims("data initialization", "prior_slope_params",
+        "double", std::vector<size_t>{static_cast<size_t>(2)});
+      prior_slope_params_data__ = Eigen::Matrix<double,-1,1>::Constant(2,
+                                    std::numeric_limits<double>::quiet_NaN());
+      new (&prior_slope_params)
+        Eigen::Map<Eigen::Matrix<double,-1,1>>(prior_slope_params_data__.data(),
+        2);
+      {
+        std::vector<local_scalar_t__> prior_slope_params_flat__;
+        current_statement__ = 201;
+        prior_slope_params_flat__ = context__.vals_r("prior_slope_params");
+        current_statement__ = 201;
+        pos__ = 1;
+        current_statement__ = 201;
+        for (int sym1__ = 1; sym1__ <= 2; ++sym1__) {
+          current_statement__ = 201;
+          stan::model::assign(prior_slope_params,
+            prior_slope_params_flat__[(pos__ - 1)],
+            "assigning variable prior_slope_params",
+            stan::model::index_uni(sym1__));
+          current_statement__ = 201;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 202;
+      stan::math::validate_non_negative_index("infection_day", "N", N);
+      current_statement__ = 203;
+      infection_day = std::vector<int>(N, std::numeric_limits<int>::min());
+      current_statement__ = 212;
+      for (int n = 1; n <= N; ++n) {
+        current_statement__ = 204;
+        stan::model::assign(infection_day, 0,
+          "assigning variable infection_day", stan::model::index_uni(n));
+        current_statement__ = 210;
+        for (int t =
+               stan::model::rvalue(start_risk, "start_risk",
+                 stan::model::index_uni(n)); t <= T; ++t) {
+          current_statement__ = 208;
+          if (stan::math::logical_eq(
+                stan::model::rvalue(I, "I", stan::model::index_uni(n),
+                  stan::model::index_uni(t)), 1)) {
+            current_statement__ = 205;
+            stan::model::assign(infection_day, t,
+              "assigning variable infection_day", stan::model::index_uni(n));
+            break;
+          }
+        }
+      }
+      current_statement__ = 213;
       log_phi_by_role_raw_1dim__ = std::numeric_limits<int>::min();
-      current_statement__ = 117;
+      current_statement__ = 213;
       log_phi_by_role_raw_1dim__ = (R - 1);
-      current_statement__ = 117;
+      current_statement__ = 213;
       stan::math::validate_non_negative_index("log_phi_by_role_raw", "R - 1",
         log_phi_by_role_raw_1dim__);
-      current_statement__ = 118;
+      current_statement__ = 214;
       log_kappa_by_role_raw_1dim__ = std::numeric_limits<int>::min();
-      current_statement__ = 118;
+      current_statement__ = 214;
       log_kappa_by_role_raw_1dim__ = (R - 1);
-      current_statement__ = 118;
+      current_statement__ = 214;
       stan::math::validate_non_negative_index("log_kappa_by_role_raw",
         "R - 1", log_kappa_by_role_raw_1dim__);
-      current_statement__ = 119;
+      current_statement__ = 215;
+      stan::math::validate_non_negative_index("beta_susc", "K_susc", K_susc);
+      current_statement__ = 216;
+      stan::math::validate_non_negative_index("beta_inf", "K_inf", K_inf);
+      current_statement__ = 217;
       stan::math::validate_non_negative_index("phi_by_role", "R", R);
-      current_statement__ = 120;
+      current_statement__ = 218;
       stan::math::validate_non_negative_index("kappa_by_role", "R", R);
+      current_statement__ = 219;
+      stan::math::validate_non_negative_index("g_curve_est", "T", T);
+      current_statement__ = 220;
+      stan::math::validate_non_negative_index("V_term_calc", "N", N);
+      current_statement__ = 221;
+      stan::math::validate_non_negative_index("V_term_calc", "T", T);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
     num_params_r__ = log_phi_by_role_raw_1dim__ +
-      log_kappa_by_role_raw_1dim__ + 1 + 1 + 1 + 1 + 1 + 1;
+      log_kappa_by_role_raw_1dim__ + 1 + 1 + 1 + 1 + 1 + 1 + 1 + K_susc +
+      K_inf;
   }
   inline std::string model_name() const final {
     return "model_household_transmission";
@@ -609,252 +1090,560 @@ public:
       local_scalar_t__ log_beta2 = DUMMY_VAR__;
       current_statement__ = 4;
       log_beta2 = in__.template read<local_scalar_t__>();
-      local_scalar_t__ log_beta3 = DUMMY_VAR__;
+      local_scalar_t__ log_alpha_comm = DUMMY_VAR__;
       current_statement__ = 5;
-      log_beta3 = in__.template read<local_scalar_t__>();
-      local_scalar_t__ log_beta4 = DUMMY_VAR__;
+      log_alpha_comm = in__.template read<local_scalar_t__>();
+      local_scalar_t__ gen_shape = DUMMY_VAR__;
       current_statement__ = 6;
-      log_beta4 = in__.template read<local_scalar_t__>();
-      local_scalar_t__ V_ref = DUMMY_VAR__;
+      gen_shape = in__.template read_constrain_lub<local_scalar_t__,
+                    jacobian__>(1.0, 20.0, lp__);
+      local_scalar_t__ gen_rate = DUMMY_VAR__;
       current_statement__ = 7;
-      V_ref = in__.template read_constrain_lub<local_scalar_t__,
-                jacobian__>(0.1, 10, lp__);
-      local_scalar_t__ V_rho = DUMMY_VAR__;
+      gen_rate = in__.template read_constrain_lub<local_scalar_t__,
+                   jacobian__>(0.1, 5.0, lp__);
+      local_scalar_t__ Ct50 = DUMMY_VAR__;
       current_statement__ = 8;
-      V_rho = in__.template read_constrain_lub<local_scalar_t__,
-                jacobian__>(0.1, 10, lp__);
+      Ct50 = in__.template read_constrain_lb<local_scalar_t__, jacobian__>(0,
+               lp__);
+      local_scalar_t__ slope_ct = DUMMY_VAR__;
+      current_statement__ = 9;
+      slope_ct = in__.template read_constrain_lb<local_scalar_t__,
+                   jacobian__>(0, lp__);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_susc =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_susc, DUMMY_VAR__);
+      current_statement__ = 10;
+      beta_susc = in__.template read<
+                    Eigen::Matrix<local_scalar_t__,-1,1>>(K_susc);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_inf =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_inf, DUMMY_VAR__);
+      current_statement__ = 11;
+      beta_inf = in__.template read<
+                   Eigen::Matrix<local_scalar_t__,-1,1>>(K_inf);
       Eigen::Matrix<local_scalar_t__,-1,1> phi_by_role =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(R, DUMMY_VAR__);
       Eigen::Matrix<local_scalar_t__,-1,1> kappa_by_role =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(R, DUMMY_VAR__);
+      Eigen::Matrix<local_scalar_t__,-1,1> g_curve_est =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(T, DUMMY_VAR__);
+      local_scalar_t__ alpha_comm = DUMMY_VAR__;
+      current_statement__ = 15;
+      alpha_comm = stan::math::exp(log_alpha_comm);
       local_scalar_t__ beta1 = DUMMY_VAR__;
-      current_statement__ = 11;
+      current_statement__ = 16;
       beta1 = stan::math::exp(log_beta1);
       local_scalar_t__ beta2 = DUMMY_VAR__;
-      current_statement__ = 12;
+      current_statement__ = 17;
       beta2 = stan::math::exp(log_beta2);
-      local_scalar_t__ beta3 = DUMMY_VAR__;
-      current_statement__ = 13;
-      beta3 = stan::math::inv_logit(log_beta3);
-      local_scalar_t__ beta4 = DUMMY_VAR__;
-      current_statement__ = 14;
-      beta4 = stan::math::inv_logit(log_beta4);
-      current_statement__ = 15;
+      current_statement__ = 19;
       stan::model::assign(phi_by_role, reference_phi,
         "assigning variable phi_by_role", stan::model::index_uni(1));
-      current_statement__ = 17;
+      current_statement__ = 21;
       for (int r = 2; r <= R; ++r) {
-        current_statement__ = 16;
+        current_statement__ = 20;
         stan::model::assign(phi_by_role, (reference_phi *
           stan::math::exp(
             stan::model::rvalue(log_phi_by_role_raw, "log_phi_by_role_raw",
               stan::model::index_uni((r - 1))))),
           "assigning variable phi_by_role", stan::model::index_uni(r));
       }
-      current_statement__ = 18;
+      current_statement__ = 22;
       stan::model::assign(kappa_by_role, reference_kappa,
         "assigning variable kappa_by_role", stan::model::index_uni(1));
-      current_statement__ = 20;
+      current_statement__ = 24;
       for (int r = 2; r <= R; ++r) {
-        current_statement__ = 19;
+        current_statement__ = 23;
         stan::model::assign(kappa_by_role, (reference_kappa *
           stan::math::exp(
             stan::model::rvalue(log_kappa_by_role_raw,
               "log_kappa_by_role_raw", stan::model::index_uni((r - 1))))),
           "assigning variable kappa_by_role", stan::model::index_uni(r));
       }
-      current_statement__ = 9;
+      {
+        current_statement__ = 25;
+        stan::math::validate_non_negative_index("raw_curve", "T", T);
+        Eigen::Matrix<local_scalar_t__,-1,1> raw_curve =
+          Eigen::Matrix<local_scalar_t__,-1,1>::Constant(T, DUMMY_VAR__);
+        current_statement__ = 28;
+        for (int d = 1; d <= T; ++d) {
+          current_statement__ = 27;
+          stan::model::assign(raw_curve,
+            stan::math::exp(
+              stan::math::gamma_lpdf<false>(d, gen_shape, gen_rate)),
+            "assigning variable raw_curve", stan::model::index_uni(d));
+        }
+        current_statement__ = 29;
+        stan::model::assign(g_curve_est,
+          stan::math::divide(raw_curve, stan::math::max(raw_curve)),
+          "assigning variable g_curve_est");
+      }
+      Eigen::Matrix<local_scalar_t__,-1,-1> V_term_calc =
+        Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(N, T, DUMMY_VAR__);
+      current_statement__ = 18;
+      stan::model::assign(V_term_calc, stan::math::rep_matrix(0.0, N, T),
+        "assigning variable V_term_calc");
+      current_statement__ = 42;
+      if (stan::math::logical_eq(use_vl_data, 1)) {
+        current_statement__ = 40;
+        for (int n = 1; n <= N; ++n) {
+          current_statement__ = 38;
+          for (int t = 1; t <= T; ++t) {
+            current_statement__ = 36;
+            if (stan::math::logical_eq(
+                  stan::model::rvalue(Y, "Y", stan::model::index_uni(n),
+                    stan::model::index_uni(t)), 1)) {
+              local_scalar_t__ val = DUMMY_VAR__;
+              current_statement__ = 31;
+              val = stan::model::rvalue(V, "V", stan::model::index_uni(n),
+                      stan::model::index_uni(t));
+              current_statement__ = 34;
+              if (stan::math::logical_eq(vl_type, 1)) {
+                current_statement__ = 33;
+                stan::model::assign(V_term_calc,
+                  stan::math::pow((stan::math::fmax(0.0, val) / Ct50),
+                    slope_ct), "assigning variable V_term_calc",
+                  stan::model::index_uni(n), stan::model::index_uni(t));
+              } else {
+                current_statement__ = 32;
+                stan::model::assign(V_term_calc,
+                  stan::math::inv_logit(((Ct50 - val) / slope_ct)),
+                  "assigning variable V_term_calc",
+                  stan::model::index_uni(n), stan::model::index_uni(t));
+              }
+            }
+          }
+        }
+      }
+      current_statement__ = 12;
       stan::math::check_greater_or_equal(function__, "phi_by_role",
         phi_by_role, 0);
-      current_statement__ = 10;
+      current_statement__ = 13;
       stan::math::check_greater_or_equal(function__, "kappa_by_role",
         kappa_by_role, 0);
-      current_statement__ = 11;
-      stan::math::check_greater_or_equal(function__, "beta1", beta1, 0);
-      current_statement__ = 12;
-      stan::math::check_greater_or_equal(function__, "beta2", beta2, 0);
-      current_statement__ = 13;
-      stan::math::check_greater_or_equal(function__, "beta3", beta3, 0);
-      current_statement__ = 13;
-      stan::math::check_less_or_equal(function__, "beta3", beta3, 1);
-      current_statement__ = 14;
-      stan::math::check_greater_or_equal(function__, "beta4", beta4, 0);
-      current_statement__ = 14;
-      stan::math::check_less_or_equal(function__, "beta4", beta4, 1);
+      current_statement__ = 15;
+      stan::math::check_greater_or_equal(function__, "alpha_comm",
+        alpha_comm, 0);
       {
-        current_statement__ = 21;
+        current_statement__ = 43;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(log_phi_by_role_raw,
-                         0, 0.5));
-        current_statement__ = 22;
+                         0, 1));
+        current_statement__ = 44;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(
-                         log_kappa_by_role_raw, 0, 0.5));
-        current_statement__ = 23;
-        lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta1, -6, 1));
-        current_statement__ = 24;
-        lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta2, -6, 1));
-        current_statement__ = 25;
-        lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta3, 0, 1.5));
-        current_statement__ = 26;
-        lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta4, 0, 1.5));
-        current_statement__ = 33;
-        if (stan::math::logical_eq(use_vl_data, 1)) {
-          current_statement__ = 30;
-          lp_accum__.add(stan::math::normal_lpdf<propto__>(V_ref, 3, 1));
-          current_statement__ = 31;
-          lp_accum__.add(stan::math::normal_lpdf<propto__>(V_rho, 2.5, 1));
+                         log_kappa_by_role_raw, 0, 1));
+        current_statement__ = 48;
+        if (stan::math::logical_eq(prior_beta1_type, 1)) {
+          current_statement__ = 47;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta1,
+                           stan::model::rvalue(prior_beta1_params,
+                             "prior_beta1_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_beta1_params,
+                             "prior_beta1_params", stan::model::index_uni(2))));
         } else {
-          current_statement__ = 27;
-          lp_accum__.add(stan::math::normal_lpdf<propto__>(V_ref, 3, 2));
-          current_statement__ = 28;
-          lp_accum__.add(stan::math::normal_lpdf<propto__>(V_rho, 2.5, 2));
+          current_statement__ = 46;
+          if (stan::math::logical_eq(prior_beta1_type, 2)) {
+            current_statement__ = 45;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(log_beta1,
+                             stan::model::rvalue(prior_beta1_params,
+                               "prior_beta1_params",
+                               stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_beta1_params,
+                               "prior_beta1_params",
+                               stan::model::index_uni(2))));
+          }
+        }
+        current_statement__ = 52;
+        if (stan::math::logical_eq(prior_beta2_type, 1)) {
+          current_statement__ = 51;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(log_beta2,
+                           stan::model::rvalue(prior_beta2_params,
+                             "prior_beta2_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_beta2_params,
+                             "prior_beta2_params", stan::model::index_uni(2))));
+        } else {
+          current_statement__ = 50;
+          if (stan::math::logical_eq(prior_beta2_type, 2)) {
+            current_statement__ = 49;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(log_beta2,
+                             stan::model::rvalue(prior_beta2_params,
+                               "prior_beta2_params",
+                               stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_beta2_params,
+                               "prior_beta2_params",
+                               stan::model::index_uni(2))));
+          }
+        }
+        current_statement__ = 56;
+        if (stan::math::logical_eq(prior_alpha_type, 1)) {
+          current_statement__ = 55;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(log_alpha_comm,
+                           stan::model::rvalue(prior_alpha_params,
+                             "prior_alpha_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_alpha_params,
+                             "prior_alpha_params", stan::model::index_uni(2))));
+        } else {
+          current_statement__ = 54;
+          if (stan::math::logical_eq(prior_alpha_type, 2)) {
+            current_statement__ = 53;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(log_alpha_comm,
+                             stan::model::rvalue(prior_alpha_params,
+                               "prior_alpha_params",
+                               stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_alpha_params,
+                               "prior_alpha_params",
+                               stan::model::index_uni(2))));
+          }
+        }
+        current_statement__ = 61;
+        if (stan::math::logical_gt(K_susc, 0)) {
+          current_statement__ = 59;
+          if (stan::math::logical_eq(prior_cov_type, 1)) {
+            current_statement__ = 58;
+            lp_accum__.add(stan::math::normal_lpdf<propto__>(beta_susc,
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(2))));
+          } else {
+            current_statement__ = 57;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(beta_susc,
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(2))));
+          }
+        }
+        current_statement__ = 66;
+        if (stan::math::logical_gt(K_inf, 0)) {
+          current_statement__ = 64;
+          if (stan::math::logical_eq(prior_cov_type, 1)) {
+            current_statement__ = 63;
+            lp_accum__.add(stan::math::normal_lpdf<propto__>(beta_inf,
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(2))));
+          } else {
+            current_statement__ = 62;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(beta_inf,
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_cov_params,
+                               "prior_cov_params", stan::model::index_uni(2))));
+          }
+        }
+        current_statement__ = 72;
+        if (stan::math::logical_eq(prior_shape_type, 1)) {
+          current_statement__ = 71;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(gen_shape,
+                           stan::model::rvalue(prior_shape_params,
+                             "prior_shape_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_shape_params,
+                             "prior_shape_params", stan::model::index_uni(2))));
+        } else {
+          current_statement__ = 70;
+          if (stan::math::logical_eq(prior_shape_type, 2)) {
+            current_statement__ = 69;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(gen_shape,
+                             stan::model::rvalue(prior_shape_params,
+                               "prior_shape_params",
+                               stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_shape_params,
+                               "prior_shape_params",
+                               stan::model::index_uni(2))));
+          } else {
+            current_statement__ = 68;
+            if (stan::math::logical_eq(prior_shape_type, 3)) {
+              current_statement__ = 67;
+              lp_accum__.add(stan::math::lognormal_lpdf<propto__>(gen_shape,
+                               stan::model::rvalue(prior_shape_params,
+                                 "prior_shape_params",
+                                 stan::model::index_uni(1)),
+                               stan::model::rvalue(prior_shape_params,
+                                 "prior_shape_params",
+                                 stan::model::index_uni(2))));
+            }
+          }
         }
         current_statement__ = 78;
-        for (int n = 1; n <= N; ++n) {
-          local_scalar_t__ susc_effect = DUMMY_VAR__;
-          current_statement__ = 34;
-          susc_effect = 1.0;
-          current_statement__ = 37;
-          if ((stan::math::primitive_value(
-                 stan::math::logical_eq(use_ab_susc, 1))
-              &&
-              stan::math::primitive_value(
-                stan::math::logical_eq(
-                  stan::model::rvalue(has_ab, "has_ab",
-                    stan::model::index_uni(n)), 1)))) {
-            current_statement__ = 35;
-            susc_effect = (1.0 - beta3);
-          }
-          local_scalar_t__ phi_n = DUMMY_VAR__;
-          current_statement__ = 38;
-          phi_n = (susc_effect *
-            stan::model::rvalue(phi_by_role, "phi_by_role",
-              stan::model::index_uni(
-                stan::model::rvalue(role_id, "role_id",
-                  stan::model::index_uni(n)))));
+        if (stan::math::logical_eq(prior_rate_type, 1)) {
+          current_statement__ = 77;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(gen_rate,
+                           stan::model::rvalue(prior_rate_params,
+                             "prior_rate_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_rate_params,
+                             "prior_rate_params", stan::model::index_uni(2))));
+        } else {
           current_statement__ = 76;
-          for (int t = 1; t <= T; ++t) {
+          if (stan::math::logical_eq(prior_rate_type, 2)) {
+            current_statement__ = 75;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(gen_rate,
+                             stan::model::rvalue(prior_rate_params,
+                               "prior_rate_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_rate_params,
+                               "prior_rate_params", stan::model::index_uni(2))));
+          } else {
             current_statement__ = 74;
-            if ((stan::math::primitive_value(stan::math::logical_eq(t, 1)) ||
-                stan::math::primitive_value(
-                  stan::math::logical_eq(
-                    stan::math::sum(
-                      stan::model::rvalue(I, "I", stan::model::index_uni(n),
-                        stan::model::index_min_max(1, (t - 1)))), 0)))) {
-              local_scalar_t__ lambda = DUMMY_VAR__;
-              current_statement__ = 39;
-              lambda = 0.0;
-              current_statement__ = 40;
-              lambda = (lambda + ((phi_n * alpha_comm_by_role) *
-                stan::model::rvalue(seasonal_forcing_mat,
-                  "seasonal_forcing_mat", stan::model::index_uni(t),
+            if (stan::math::logical_eq(prior_rate_type, 3)) {
+              current_statement__ = 73;
+              lp_accum__.add(stan::math::lognormal_lpdf<propto__>(gen_rate,
+                               stan::model::rvalue(prior_rate_params,
+                                 "prior_rate_params",
+                                 stan::model::index_uni(1)),
+                               stan::model::rvalue(prior_rate_params,
+                                 "prior_rate_params",
+                                 stan::model::index_uni(2))));
+            }
+          }
+        }
+        current_statement__ = 84;
+        if (stan::math::logical_eq(prior_ct50_type, 1)) {
+          current_statement__ = 83;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(Ct50,
+                           stan::model::rvalue(prior_ct50_params,
+                             "prior_ct50_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_ct50_params,
+                             "prior_ct50_params", stan::model::index_uni(2))));
+        } else {
+          current_statement__ = 82;
+          if (stan::math::logical_eq(prior_ct50_type, 2)) {
+            current_statement__ = 81;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(Ct50,
+                             stan::model::rvalue(prior_ct50_params,
+                               "prior_ct50_params", stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_ct50_params,
+                               "prior_ct50_params", stan::model::index_uni(2))));
+          } else {
+            current_statement__ = 80;
+            if (stan::math::logical_eq(prior_ct50_type, 3)) {
+              current_statement__ = 79;
+              lp_accum__.add(stan::math::lognormal_lpdf<propto__>(Ct50,
+                               stan::model::rvalue(prior_ct50_params,
+                                 "prior_ct50_params",
+                                 stan::model::index_uni(1)),
+                               stan::model::rvalue(prior_ct50_params,
+                                 "prior_ct50_params",
+                                 stan::model::index_uni(2))));
+            }
+          }
+        }
+        current_statement__ = 90;
+        if (stan::math::logical_eq(prior_slope_type, 1)) {
+          current_statement__ = 89;
+          lp_accum__.add(stan::math::normal_lpdf<propto__>(slope_ct,
+                           stan::model::rvalue(prior_slope_params,
+                             "prior_slope_params", stan::model::index_uni(1)),
+                           stan::model::rvalue(prior_slope_params,
+                             "prior_slope_params", stan::model::index_uni(2))));
+        } else {
+          current_statement__ = 88;
+          if (stan::math::logical_eq(prior_slope_type, 2)) {
+            current_statement__ = 87;
+            lp_accum__.add(stan::math::uniform_lpdf<propto__>(slope_ct,
+                             stan::model::rvalue(prior_slope_params,
+                               "prior_slope_params",
+                               stan::model::index_uni(1)),
+                             stan::model::rvalue(prior_slope_params,
+                               "prior_slope_params",
+                               stan::model::index_uni(2))));
+          } else {
+            current_statement__ = 86;
+            if (stan::math::logical_eq(prior_slope_type, 3)) {
+              current_statement__ = 85;
+              lp_accum__.add(stan::math::lognormal_lpdf<propto__>(slope_ct,
+                               stan::model::rvalue(prior_slope_params,
+                                 "prior_slope_params",
+                                 stan::model::index_uni(1)),
+                               stan::model::rvalue(prior_slope_params,
+                                 "prior_slope_params",
+                                 stan::model::index_uni(2))));
+            }
+          }
+        }
+        current_statement__ = 91;
+        stan::math::validate_non_negative_index("susc_eff", "N", N);
+        Eigen::Matrix<local_scalar_t__,-1,1> susc_eff =
+          Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+        current_statement__ = 93;
+        stan::math::validate_non_negative_index("inf_eff", "N", N);
+        Eigen::Matrix<local_scalar_t__,-1,1> inf_eff =
+          Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+        current_statement__ = 95;
+        stan::math::validate_non_negative_index("density_eff", "N", N);
+        Eigen::Matrix<local_scalar_t__,-1,1> density_eff =
+          Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+        current_statement__ = 103;
+        for (int n = 1; n <= N; ++n) {
+          local_scalar_t__ log_susc = DUMMY_VAR__;
+          current_statement__ = 97;
+          log_susc = (stan::math::logical_gt(K_susc, 0) ? stan::math::dot_product(
+                                                            stan::model::rvalue(
+                                                              X_susc,
+                                                              "X_susc",
+                                                              stan::model::index_uni(
+                                                                n)),
+                                                            beta_susc) : 0.0);
+          local_scalar_t__ log_inf = DUMMY_VAR__;
+          current_statement__ = 98;
+          log_inf = (stan::math::logical_gt(K_inf, 0) ? stan::math::dot_product(
+                                                          stan::model::rvalue(
+                                                            X_inf, "X_inf",
+                                                            stan::model::index_uni(
+                                                              n)), beta_inf) : 0.0);
+          current_statement__ = 99;
+          stan::model::assign(susc_eff,
+            (stan::model::rvalue(phi_by_role, "phi_by_role",
+               stan::model::index_uni(
+                 stan::model::rvalue(role_id, "role_id",
+                   stan::model::index_uni(n)))) * stan::math::exp(log_susc)),
+            "assigning variable susc_eff", stan::model::index_uni(n));
+          current_statement__ = 100;
+          stan::model::assign(inf_eff,
+            (stan::model::rvalue(kappa_by_role, "kappa_by_role",
+               stan::model::index_uni(
+                 stan::model::rvalue(role_id, "role_id",
+                   stan::model::index_uni(n)))) * stan::math::exp(log_inf)),
+            "assigning variable inf_eff", stan::model::index_uni(n));
+          current_statement__ = 101;
+          stan::model::assign(density_eff,
+            stan::math::pow((1.0 /
+              stan::math::max(
+                stan::model::rvalue(hh_size_people, "hh_size_people",
                   stan::model::index_uni(
-                    stan::model::rvalue(role_id, "role_id",
-                      stan::model::index_uni(n))))));
-              int h = std::numeric_limits<int>::min();
-              current_statement__ = 41;
-              h = stan::model::rvalue(hh_id, "hh_id",
-                    stan::model::index_uni(n));
-              local_scalar_t__ scaling_h = DUMMY_VAR__;
-              current_statement__ = 42;
-              scaling_h = stan::math::pow((1.0 /
-                            stan::math::max(
-                              stan::model::rvalue(hh_size, "hh_size",
-                                stan::model::index_uni(h)), 1)), delta);
-              current_statement__ = 70;
-              for (int m_idx = 1; m_idx <=
-                   stan::model::rvalue(hh_size, "hh_size",
-                     stan::model::index_uni(h)); ++m_idx) {
-                int m = std::numeric_limits<int>::min();
-                current_statement__ = 43;
-                m = stan::model::rvalue(hh_members, "hh_members",
-                      stan::model::index_uni(h),
-                      stan::model::index_uni(m_idx));
-                current_statement__ = 45;
-                if ((stan::math::primitive_value(stan::math::logical_eq(m, 0))
-                    ||
-                    stan::math::primitive_value(stan::math::logical_eq(m, n)))) {
-                  continue;
-                }
-                int tau = std::numeric_limits<int>::min();
-                current_statement__ = 46;
-                tau = stan::model::rvalue(time_since_infection,
-                        "time_since_infection", stan::model::index_uni(m),
-                        stan::model::index_uni(t));
-                current_statement__ = 48;
-                if (stan::math::logical_lt(tau, 0)) {
-                  continue;
-                }
-                local_scalar_t__ inf_effect = DUMMY_VAR__;
-                current_statement__ = 49;
-                inf_effect = 1.0;
-                current_statement__ = 52;
+                    stan::model::rvalue(hh_id, "hh_id",
+                      stan::model::index_uni(n)))), 1)), delta),
+            "assigning variable density_eff", stan::model::index_uni(n));
+        }
+        current_statement__ = 140;
+        for (int t = 1; t <= T; ++t) {
+          current_statement__ = 104;
+          stan::math::validate_non_negative_index("current_infectivity", "N",
+            N);
+          Eigen::Matrix<local_scalar_t__,-1,1> current_infectivity =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+          current_statement__ = 105;
+          stan::model::assign(current_infectivity,
+            stan::math::rep_vector(0.0, N),
+            "assigning variable current_infectivity");
+          current_statement__ = 121;
+          for (int n = 1; n <= N; ++n) {
+            current_statement__ = 119;
+            if (stan::math::logical_eq(
+                  stan::model::rvalue(Y, "Y", stan::model::index_uni(n),
+                    stan::model::index_uni(t)), 1)) {
+              local_scalar_t__ v_comp = DUMMY_VAR__;
+              current_statement__ = 106;
+              v_comp = 1.0;
+              current_statement__ = 116;
+              if (stan::math::logical_eq(use_vl_data, 1)) {
+                current_statement__ = 114;
+                v_comp = stan::model::rvalue(V_term_calc, "V_term_calc",
+                           stan::model::index_uni(n),
+                           stan::model::index_uni(t));
+              } else {
+                int inf_day = std::numeric_limits<int>::min();
+                current_statement__ = 107;
+                inf_day = stan::model::rvalue(infection_day, "infection_day",
+                            stan::model::index_uni(n));
+                current_statement__ = 112;
                 if ((stan::math::primitive_value(
-                       stan::math::logical_eq(use_ab_inf, 1))
+                       stan::math::logical_neq(inf_day, 0))
                     &&
                     stan::math::primitive_value(
-                      stan::math::logical_eq(
-                        stan::model::rvalue(has_ab, "has_ab",
-                          stan::model::index_uni(m)), 1)))) {
-                  current_statement__ = 50;
-                  inf_effect = (1.0 - beta4);
+                      stan::math::logical_gte(t, inf_day)))) {
+                  int dt = std::numeric_limits<int>::min();
+                  current_statement__ = 108;
+                  dt = ((t - inf_day) + 1);
+                  current_statement__ = 110;
+                  if ((stan::math::primitive_value(
+                         stan::math::logical_eq(use_curve_logic, 1))
+                      &&
+                      stan::math::primitive_value(
+                        stan::math::logical_lte(dt, T)))) {
+                    current_statement__ = 109;
+                    v_comp = stan::model::rvalue(g_curve_est, "g_curve_est",
+                               stan::model::index_uni(dt));
+                  }
                 }
-                local_scalar_t__ kappa_m = DUMMY_VAR__;
-                current_statement__ = 53;
-                kappa_m = (inf_effect *
-                  stan::model::rvalue(kappa_by_role, "kappa_by_role",
+              }
+              current_statement__ = 117;
+              stan::model::assign(current_infectivity,
+                ((stan::model::rvalue(density_eff, "density_eff",
+                    stan::model::index_uni(n)) *
+                stan::model::rvalue(inf_eff, "inf_eff",
+                  stan::model::index_uni(n))) * (beta1 + (beta2 * v_comp))),
+                "assigning variable current_infectivity",
+                stan::model::index_uni(n));
+            }
+          }
+          current_statement__ = 122;
+          stan::math::validate_non_negative_index("hh_force", "N", N);
+          Eigen::Matrix<local_scalar_t__,-1,1> hh_force =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+          current_statement__ = 123;
+          stan::model::assign(hh_force, stan::math::rep_vector(0.0, N),
+            "assigning variable hh_force");
+          current_statement__ = 126;
+          for (int k = 1; k <= n_contacts; ++k) {
+            current_statement__ = 124;
+            stan::model::assign(hh_force,
+              (stan::model::rvalue(hh_force, "hh_force",
+                 stan::model::index_uni(
+                   stan::model::rvalue(contact_tgt, "contact_tgt",
+                     stan::model::index_uni(k)))) +
+              (stan::model::rvalue(contact_w, "contact_w",
+                 stan::model::index_uni(k)) *
+              stan::model::rvalue(current_infectivity, "current_infectivity",
+                stan::model::index_uni(
+                  stan::model::rvalue(contact_src, "contact_src",
+                    stan::model::index_uni(k)))))),
+              "assigning variable hh_force",
+              stan::model::index_uni(
+                stan::model::rvalue(contact_tgt, "contact_tgt",
+                  stan::model::index_uni(k))));
+          }
+          current_statement__ = 138;
+          for (int n = 1; n <= N; ++n) {
+            current_statement__ = 136;
+            if (stan::math::logical_gte(t,
+                  stan::model::rvalue(start_risk, "start_risk",
+                    stan::model::index_uni(n)))) {
+              int t_stop = std::numeric_limits<int>::min();
+              current_statement__ = 127;
+              t_stop = (stan::math::logical_eq(
+                          stan::model::rvalue(infection_day, "infection_day",
+                            stan::model::index_uni(n)), 0) ? T : stan::model::rvalue(
+                                                                   infection_day,
+                                                                   "infection_day",
+                                                                   stan::model::index_uni(
+                                                                    n)));
+              current_statement__ = 134;
+              if (stan::math::logical_lte(t, t_stop)) {
+                local_scalar_t__ lambda = DUMMY_VAR__;
+                current_statement__ = 128;
+                lambda = (stan::model::rvalue(susc_eff, "susc_eff",
+                            stan::model::index_uni(n))
+                  * ((alpha_comm *
+                  stan::model::rvalue(seasonal_forcing_mat,
+                    "seasonal_forcing_mat", stan::model::index_uni(t),
                     stan::model::index_uni(
                       stan::model::rvalue(role_id, "role_id",
-                        stan::model::index_uni(m)))));
-                local_scalar_t__ g_val = DUMMY_VAR__;
-                current_statement__ = 54;
-                g_val = 1.0;
-                current_statement__ = 59;
-                if (stan::math::logical_eq(use_curve_logic, 1)) {
-                  current_statement__ = 57;
-                  if (stan::math::logical_lte((tau + 1),
-                        stan::math::num_elements(g_profile))) {
-                    current_statement__ = 56;
-                    g_val = stan::model::rvalue(g_profile, "g_profile",
-                              stan::model::index_uni((tau + 1)));
-                  } else {
-                    current_statement__ = 55;
-                    g_val = 0;
-                  }
+                        stan::model::index_uni(n)))))
+                  +
+                  stan::model::rvalue(hh_force, "hh_force",
+                    stan::model::index_uni(n))));
+                current_statement__ = 130;
+                if (stan::math::logical_gt(lambda, 20)) {
+                  current_statement__ = 129;
+                  lambda = 20;
                 }
-                local_scalar_t__ term1 = DUMMY_VAR__;
-                current_statement__ = 60;
-                term1 = (beta1 * g_val);
-                local_scalar_t__ term2 = DUMMY_VAR__;
-                current_statement__ = 61;
-                term2 = 0.0;
-                current_statement__ = 66;
-                if (stan::math::logical_eq(use_vl_data, 1)) {
-                  local_scalar_t__ v_val = DUMMY_VAR__;
-                  current_statement__ = 62;
-                  v_val = stan::model::rvalue(V_raw, "V_raw",
-                            stan::model::index_uni(m),
-                            stan::model::index_uni(t));
-                  current_statement__ = 64;
-                  if (stan::math::logical_gt(v_val, 0)) {
-                    current_statement__ = 63;
-                    term2 = (beta2 *
-                      stan::math::pow((v_val / V_ref), V_rho));
-                  }
-                }
-                local_scalar_t__ h_mt = DUMMY_VAR__;
-                current_statement__ = 67;
-                h_mt = ((scaling_h * kappa_m) * (term1 + term2));
-                current_statement__ = 68;
-                lambda = (lambda + (phi_n * h_mt));
+                int outcome = std::numeric_limits<int>::min();
+                current_statement__ = 131;
+                outcome = (stan::math::logical_eq(t,
+                             stan::model::rvalue(infection_day,
+                               "infection_day", stan::model::index_uni(n))) ? 1 : 0);
+                current_statement__ = 132;
+                lp_accum__.add(stan::math::bernoulli_lpmf<false>(outcome,
+                                 (1.0 - stan::math::exp(-lambda))));
               }
-              current_statement__ = 71;
-              lambda = stan::math::fmin(stan::math::fmax(lambda, 1e-12), 1e6);
-              current_statement__ = 72;
-              lp_accum__.add(stan::math::bernoulli_lpmf<false>(
-                               stan::model::rvalue(I, "I",
-                                 stan::model::index_uni(n),
-                                 stan::model::index_uni(t)), (1 -
-                               stan::math::exp(-lambda))));
             }
           }
         }
@@ -914,100 +1703,169 @@ public:
       double log_beta2 = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 4;
       log_beta2 = in__.template read<local_scalar_t__>();
-      double log_beta3 = std::numeric_limits<double>::quiet_NaN();
+      double log_alpha_comm = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 5;
-      log_beta3 = in__.template read<local_scalar_t__>();
-      double log_beta4 = std::numeric_limits<double>::quiet_NaN();
+      log_alpha_comm = in__.template read<local_scalar_t__>();
+      double gen_shape = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 6;
-      log_beta4 = in__.template read<local_scalar_t__>();
-      double V_ref = std::numeric_limits<double>::quiet_NaN();
+      gen_shape = in__.template read_constrain_lub<local_scalar_t__,
+                    jacobian__>(1.0, 20.0, lp__);
+      double gen_rate = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 7;
-      V_ref = in__.template read_constrain_lub<local_scalar_t__,
-                jacobian__>(0.1, 10, lp__);
-      double V_rho = std::numeric_limits<double>::quiet_NaN();
+      gen_rate = in__.template read_constrain_lub<local_scalar_t__,
+                   jacobian__>(0.1, 5.0, lp__);
+      double Ct50 = std::numeric_limits<double>::quiet_NaN();
       current_statement__ = 8;
-      V_rho = in__.template read_constrain_lub<local_scalar_t__,
-                jacobian__>(0.1, 10, lp__);
+      Ct50 = in__.template read_constrain_lb<local_scalar_t__, jacobian__>(0,
+               lp__);
+      double slope_ct = std::numeric_limits<double>::quiet_NaN();
+      current_statement__ = 9;
+      slope_ct = in__.template read_constrain_lb<local_scalar_t__,
+                   jacobian__>(0, lp__);
+      Eigen::Matrix<double,-1,1> beta_susc =
+        Eigen::Matrix<double,-1,1>::Constant(K_susc,
+          std::numeric_limits<double>::quiet_NaN());
+      current_statement__ = 10;
+      beta_susc = in__.template read<
+                    Eigen::Matrix<local_scalar_t__,-1,1>>(K_susc);
+      Eigen::Matrix<double,-1,1> beta_inf =
+        Eigen::Matrix<double,-1,1>::Constant(K_inf,
+          std::numeric_limits<double>::quiet_NaN());
+      current_statement__ = 11;
+      beta_inf = in__.template read<
+                   Eigen::Matrix<local_scalar_t__,-1,1>>(K_inf);
       Eigen::Matrix<double,-1,1> phi_by_role =
         Eigen::Matrix<double,-1,1>::Constant(R,
           std::numeric_limits<double>::quiet_NaN());
       Eigen::Matrix<double,-1,1> kappa_by_role =
         Eigen::Matrix<double,-1,1>::Constant(R,
           std::numeric_limits<double>::quiet_NaN());
+      Eigen::Matrix<double,-1,1> g_curve_est =
+        Eigen::Matrix<double,-1,1>::Constant(T,
+          std::numeric_limits<double>::quiet_NaN());
+      double alpha_comm = std::numeric_limits<double>::quiet_NaN();
       double beta1 = std::numeric_limits<double>::quiet_NaN();
       double beta2 = std::numeric_limits<double>::quiet_NaN();
-      double beta3 = std::numeric_limits<double>::quiet_NaN();
-      double beta4 = std::numeric_limits<double>::quiet_NaN();
+      Eigen::Matrix<double,-1,-1> V_term_calc =
+        Eigen::Matrix<double,-1,-1>::Constant(N, T,
+          std::numeric_limits<double>::quiet_NaN());
       out__.write(log_phi_by_role_raw);
       out__.write(log_kappa_by_role_raw);
       out__.write(log_beta1);
       out__.write(log_beta2);
-      out__.write(log_beta3);
-      out__.write(log_beta4);
-      out__.write(V_ref);
-      out__.write(V_rho);
+      out__.write(log_alpha_comm);
+      out__.write(gen_shape);
+      out__.write(gen_rate);
+      out__.write(Ct50);
+      out__.write(slope_ct);
+      out__.write(beta_susc);
+      out__.write(beta_inf);
       if (stan::math::logical_negation(
             (stan::math::primitive_value(emit_transformed_parameters__) ||
             stan::math::primitive_value(emit_generated_quantities__)))) {
         return ;
       }
-      current_statement__ = 11;
-      beta1 = stan::math::exp(log_beta1);
-      current_statement__ = 12;
-      beta2 = stan::math::exp(log_beta2);
-      current_statement__ = 13;
-      beta3 = stan::math::inv_logit(log_beta3);
-      current_statement__ = 14;
-      beta4 = stan::math::inv_logit(log_beta4);
       current_statement__ = 15;
+      alpha_comm = stan::math::exp(log_alpha_comm);
+      current_statement__ = 16;
+      beta1 = stan::math::exp(log_beta1);
+      current_statement__ = 17;
+      beta2 = stan::math::exp(log_beta2);
+      current_statement__ = 19;
       stan::model::assign(phi_by_role, reference_phi,
         "assigning variable phi_by_role", stan::model::index_uni(1));
-      current_statement__ = 17;
+      current_statement__ = 21;
       for (int r = 2; r <= R; ++r) {
-        current_statement__ = 16;
+        current_statement__ = 20;
         stan::model::assign(phi_by_role, (reference_phi *
           stan::math::exp(
             stan::model::rvalue(log_phi_by_role_raw, "log_phi_by_role_raw",
               stan::model::index_uni((r - 1))))),
           "assigning variable phi_by_role", stan::model::index_uni(r));
       }
-      current_statement__ = 18;
+      current_statement__ = 22;
       stan::model::assign(kappa_by_role, reference_kappa,
         "assigning variable kappa_by_role", stan::model::index_uni(1));
-      current_statement__ = 20;
+      current_statement__ = 24;
       for (int r = 2; r <= R; ++r) {
-        current_statement__ = 19;
+        current_statement__ = 23;
         stan::model::assign(kappa_by_role, (reference_kappa *
           stan::math::exp(
             stan::model::rvalue(log_kappa_by_role_raw,
               "log_kappa_by_role_raw", stan::model::index_uni((r - 1))))),
           "assigning variable kappa_by_role", stan::model::index_uni(r));
       }
-      current_statement__ = 9;
+      {
+        current_statement__ = 25;
+        stan::math::validate_non_negative_index("raw_curve", "T", T);
+        Eigen::Matrix<double,-1,1> raw_curve =
+          Eigen::Matrix<double,-1,1>::Constant(T,
+            std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 28;
+        for (int d = 1; d <= T; ++d) {
+          current_statement__ = 27;
+          stan::model::assign(raw_curve,
+            stan::math::exp(
+              stan::math::gamma_lpdf<false>(d, gen_shape, gen_rate)),
+            "assigning variable raw_curve", stan::model::index_uni(d));
+        }
+        current_statement__ = 29;
+        stan::model::assign(g_curve_est,
+          stan::math::divide(raw_curve, stan::math::max(raw_curve)),
+          "assigning variable g_curve_est");
+      }
+      current_statement__ = 18;
+      stan::model::assign(V_term_calc, stan::math::rep_matrix(0.0, N, T),
+        "assigning variable V_term_calc");
+      current_statement__ = 42;
+      if (stan::math::logical_eq(use_vl_data, 1)) {
+        current_statement__ = 40;
+        for (int n = 1; n <= N; ++n) {
+          current_statement__ = 38;
+          for (int t = 1; t <= T; ++t) {
+            current_statement__ = 36;
+            if (stan::math::logical_eq(
+                  stan::model::rvalue(Y, "Y", stan::model::index_uni(n),
+                    stan::model::index_uni(t)), 1)) {
+              double val = std::numeric_limits<double>::quiet_NaN();
+              current_statement__ = 31;
+              val = stan::model::rvalue(V, "V", stan::model::index_uni(n),
+                      stan::model::index_uni(t));
+              current_statement__ = 34;
+              if (stan::math::logical_eq(vl_type, 1)) {
+                current_statement__ = 33;
+                stan::model::assign(V_term_calc,
+                  stan::math::pow((stan::math::fmax(0.0, val) / Ct50),
+                    slope_ct), "assigning variable V_term_calc",
+                  stan::model::index_uni(n), stan::model::index_uni(t));
+              } else {
+                current_statement__ = 32;
+                stan::model::assign(V_term_calc,
+                  stan::math::inv_logit(((Ct50 - val) / slope_ct)),
+                  "assigning variable V_term_calc",
+                  stan::model::index_uni(n), stan::model::index_uni(t));
+              }
+            }
+          }
+        }
+      }
+      current_statement__ = 12;
       stan::math::check_greater_or_equal(function__, "phi_by_role",
         phi_by_role, 0);
-      current_statement__ = 10;
+      current_statement__ = 13;
       stan::math::check_greater_or_equal(function__, "kappa_by_role",
         kappa_by_role, 0);
-      current_statement__ = 11;
-      stan::math::check_greater_or_equal(function__, "beta1", beta1, 0);
-      current_statement__ = 12;
-      stan::math::check_greater_or_equal(function__, "beta2", beta2, 0);
-      current_statement__ = 13;
-      stan::math::check_greater_or_equal(function__, "beta3", beta3, 0);
-      current_statement__ = 13;
-      stan::math::check_less_or_equal(function__, "beta3", beta3, 1);
-      current_statement__ = 14;
-      stan::math::check_greater_or_equal(function__, "beta4", beta4, 0);
-      current_statement__ = 14;
-      stan::math::check_less_or_equal(function__, "beta4", beta4, 1);
+      current_statement__ = 15;
+      stan::math::check_greater_or_equal(function__, "alpha_comm",
+        alpha_comm, 0);
       if (emit_transformed_parameters__) {
         out__.write(phi_by_role);
         out__.write(kappa_by_role);
+        out__.write(g_curve_est);
+        out__.write(alpha_comm);
         out__.write(beta1);
         out__.write(beta2);
-        out__.write(beta3);
-        out__.write(beta4);
+        out__.write(V_term_calc);
       }
       if (stan::math::logical_negation(emit_generated_quantities__)) {
         return ;
@@ -1058,22 +1916,40 @@ public:
       current_statement__ = 4;
       log_beta2 = in__.read<local_scalar_t__>();
       out__.write(log_beta2);
-      local_scalar_t__ log_beta3 = DUMMY_VAR__;
+      local_scalar_t__ log_alpha_comm = DUMMY_VAR__;
       current_statement__ = 5;
-      log_beta3 = in__.read<local_scalar_t__>();
-      out__.write(log_beta3);
-      local_scalar_t__ log_beta4 = DUMMY_VAR__;
+      log_alpha_comm = in__.read<local_scalar_t__>();
+      out__.write(log_alpha_comm);
+      local_scalar_t__ gen_shape = DUMMY_VAR__;
       current_statement__ = 6;
-      log_beta4 = in__.read<local_scalar_t__>();
-      out__.write(log_beta4);
-      local_scalar_t__ V_ref = DUMMY_VAR__;
+      gen_shape = in__.read<local_scalar_t__>();
+      out__.write_free_lub(1.0, 20.0, gen_shape);
+      local_scalar_t__ gen_rate = DUMMY_VAR__;
       current_statement__ = 7;
-      V_ref = in__.read<local_scalar_t__>();
-      out__.write_free_lub(0.1, 10, V_ref);
-      local_scalar_t__ V_rho = DUMMY_VAR__;
+      gen_rate = in__.read<local_scalar_t__>();
+      out__.write_free_lub(0.1, 5.0, gen_rate);
+      local_scalar_t__ Ct50 = DUMMY_VAR__;
       current_statement__ = 8;
-      V_rho = in__.read<local_scalar_t__>();
-      out__.write_free_lub(0.1, 10, V_rho);
+      Ct50 = in__.read<local_scalar_t__>();
+      out__.write_free_lb(0, Ct50);
+      local_scalar_t__ slope_ct = DUMMY_VAR__;
+      current_statement__ = 9;
+      slope_ct = in__.read<local_scalar_t__>();
+      out__.write_free_lb(0, slope_ct);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_susc =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_susc, DUMMY_VAR__);
+      current_statement__ = 10;
+      stan::model::assign(beta_susc,
+        in__.read<Eigen::Matrix<local_scalar_t__,-1,1>>(K_susc),
+        "assigning variable beta_susc");
+      out__.write(beta_susc);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_inf =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_inf, DUMMY_VAR__);
+      current_statement__ = 11;
+      stan::model::assign(beta_inf,
+        in__.read<Eigen::Matrix<local_scalar_t__,-1,1>>(K_inf),
+        "assigning variable beta_inf");
+      out__.write(beta_inf);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -1104,17 +1980,26 @@ public:
       context__.validate_dims("parameter initialization", "log_beta2",
         "double", std::vector<size_t>{});
       current_statement__ = 5;
-      context__.validate_dims("parameter initialization", "log_beta3",
+      context__.validate_dims("parameter initialization", "log_alpha_comm",
         "double", std::vector<size_t>{});
       current_statement__ = 6;
-      context__.validate_dims("parameter initialization", "log_beta4",
+      context__.validate_dims("parameter initialization", "gen_shape",
         "double", std::vector<size_t>{});
       current_statement__ = 7;
-      context__.validate_dims("parameter initialization", "V_ref", "double",
-        std::vector<size_t>{});
+      context__.validate_dims("parameter initialization", "gen_rate",
+        "double", std::vector<size_t>{});
       current_statement__ = 8;
-      context__.validate_dims("parameter initialization", "V_rho", "double",
+      context__.validate_dims("parameter initialization", "Ct50", "double",
         std::vector<size_t>{});
+      current_statement__ = 9;
+      context__.validate_dims("parameter initialization", "slope_ct",
+        "double", std::vector<size_t>{});
+      current_statement__ = 10;
+      context__.validate_dims("parameter initialization", "beta_susc",
+        "double", std::vector<size_t>{static_cast<size_t>(K_susc)});
+      current_statement__ = 11;
+      context__.validate_dims("parameter initialization", "beta_inf",
+        "double", std::vector<size_t>{static_cast<size_t>(K_inf)});
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
       Eigen::Matrix<local_scalar_t__,-1,1> log_phi_by_role_raw =
@@ -1167,22 +2052,62 @@ public:
       current_statement__ = 4;
       log_beta2 = context__.vals_r("log_beta2")[(1 - 1)];
       out__.write(log_beta2);
-      local_scalar_t__ log_beta3 = DUMMY_VAR__;
+      local_scalar_t__ log_alpha_comm = DUMMY_VAR__;
       current_statement__ = 5;
-      log_beta3 = context__.vals_r("log_beta3")[(1 - 1)];
-      out__.write(log_beta3);
-      local_scalar_t__ log_beta4 = DUMMY_VAR__;
+      log_alpha_comm = context__.vals_r("log_alpha_comm")[(1 - 1)];
+      out__.write(log_alpha_comm);
+      local_scalar_t__ gen_shape = DUMMY_VAR__;
       current_statement__ = 6;
-      log_beta4 = context__.vals_r("log_beta4")[(1 - 1)];
-      out__.write(log_beta4);
-      local_scalar_t__ V_ref = DUMMY_VAR__;
+      gen_shape = context__.vals_r("gen_shape")[(1 - 1)];
+      out__.write_free_lub(1.0, 20.0, gen_shape);
+      local_scalar_t__ gen_rate = DUMMY_VAR__;
       current_statement__ = 7;
-      V_ref = context__.vals_r("V_ref")[(1 - 1)];
-      out__.write_free_lub(0.1, 10, V_ref);
-      local_scalar_t__ V_rho = DUMMY_VAR__;
+      gen_rate = context__.vals_r("gen_rate")[(1 - 1)];
+      out__.write_free_lub(0.1, 5.0, gen_rate);
+      local_scalar_t__ Ct50 = DUMMY_VAR__;
       current_statement__ = 8;
-      V_rho = context__.vals_r("V_rho")[(1 - 1)];
-      out__.write_free_lub(0.1, 10, V_rho);
+      Ct50 = context__.vals_r("Ct50")[(1 - 1)];
+      out__.write_free_lb(0, Ct50);
+      local_scalar_t__ slope_ct = DUMMY_VAR__;
+      current_statement__ = 9;
+      slope_ct = context__.vals_r("slope_ct")[(1 - 1)];
+      out__.write_free_lb(0, slope_ct);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_susc =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_susc, DUMMY_VAR__);
+      {
+        std::vector<local_scalar_t__> beta_susc_flat__;
+        current_statement__ = 10;
+        beta_susc_flat__ = context__.vals_r("beta_susc");
+        current_statement__ = 10;
+        pos__ = 1;
+        current_statement__ = 10;
+        for (int sym1__ = 1; sym1__ <= K_susc; ++sym1__) {
+          current_statement__ = 10;
+          stan::model::assign(beta_susc, beta_susc_flat__[(pos__ - 1)],
+            "assigning variable beta_susc", stan::model::index_uni(sym1__));
+          current_statement__ = 10;
+          pos__ = (pos__ + 1);
+        }
+      }
+      out__.write(beta_susc);
+      Eigen::Matrix<local_scalar_t__,-1,1> beta_inf =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(K_inf, DUMMY_VAR__);
+      {
+        std::vector<local_scalar_t__> beta_inf_flat__;
+        current_statement__ = 11;
+        beta_inf_flat__ = context__.vals_r("beta_inf");
+        current_statement__ = 11;
+        pos__ = 1;
+        current_statement__ = 11;
+        for (int sym1__ = 1; sym1__ <= K_inf; ++sym1__) {
+          current_statement__ = 11;
+          stan::model::assign(beta_inf, beta_inf_flat__[(pos__ - 1)],
+            "assigning variable beta_inf", stan::model::index_uni(sym1__));
+          current_statement__ = 11;
+          pos__ = (pos__ + 1);
+        }
+      }
+      out__.write(beta_inf);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -1193,11 +2118,12 @@ public:
                   emit_generated_quantities__ = true) const {
     names__ = std::vector<std::string>{"log_phi_by_role_raw",
                 "log_kappa_by_role_raw", "log_beta1", "log_beta2",
-                "log_beta3", "log_beta4", "V_ref", "V_rho"};
+                "log_alpha_comm", "gen_shape", "gen_rate", "Ct50",
+                "slope_ct", "beta_susc", "beta_inf"};
     if (emit_transformed_parameters__) {
       std::vector<std::string>
-        temp{"phi_by_role", "kappa_by_role", "beta1", "beta2", "beta3",
-             "beta4"};
+        temp{"phi_by_role", "kappa_by_role", "g_curve_est", "alpha_comm",
+             "beta1", "beta2", "V_term_calc"};
       names__.reserve(names__.size() + temp.size());
       names__.insert(names__.end(), temp.begin(), temp.end());
     }
@@ -1214,13 +2140,19 @@ public:
                                       log_kappa_by_role_raw_1dim__)},
                 std::vector<size_t>{}, std::vector<size_t>{},
                 std::vector<size_t>{}, std::vector<size_t>{},
-                std::vector<size_t>{}, std::vector<size_t>{}};
+                std::vector<size_t>{}, std::vector<size_t>{},
+                std::vector<size_t>{},
+                std::vector<size_t>{static_cast<size_t>(K_susc)},
+                std::vector<size_t>{static_cast<size_t>(K_inf)}};
     if (emit_transformed_parameters__) {
       std::vector<std::vector<size_t>>
         temp{std::vector<size_t>{static_cast<size_t>(R)},
              std::vector<size_t>{static_cast<size_t>(R)},
+             std::vector<size_t>{static_cast<size_t>(T)},
              std::vector<size_t>{}, std::vector<size_t>{},
-             std::vector<size_t>{}, std::vector<size_t>{}};
+             std::vector<size_t>{},
+             std::vector<size_t>{static_cast<size_t>(N),
+               static_cast<size_t>(T)}};
       dimss__.reserve(dimss__.size() + temp.size());
       dimss__.insert(dimss__.end(), temp.begin(), temp.end());
     }
@@ -1240,10 +2172,19 @@ public:
     }
     param_names__.emplace_back(std::string() + "log_beta1");
     param_names__.emplace_back(std::string() + "log_beta2");
-    param_names__.emplace_back(std::string() + "log_beta3");
-    param_names__.emplace_back(std::string() + "log_beta4");
-    param_names__.emplace_back(std::string() + "V_ref");
-    param_names__.emplace_back(std::string() + "V_rho");
+    param_names__.emplace_back(std::string() + "log_alpha_comm");
+    param_names__.emplace_back(std::string() + "gen_shape");
+    param_names__.emplace_back(std::string() + "gen_rate");
+    param_names__.emplace_back(std::string() + "Ct50");
+    param_names__.emplace_back(std::string() + "slope_ct");
+    for (int sym1__ = 1; sym1__ <= K_susc; ++sym1__) {
+      param_names__.emplace_back(std::string() + "beta_susc" + '.' +
+        std::to_string(sym1__));
+    }
+    for (int sym1__ = 1; sym1__ <= K_inf; ++sym1__) {
+      param_names__.emplace_back(std::string() + "beta_inf" + '.' +
+        std::to_string(sym1__));
+    }
     if (emit_transformed_parameters__) {
       for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
         param_names__.emplace_back(std::string() + "phi_by_role" + '.' +
@@ -1253,10 +2194,19 @@ public:
         param_names__.emplace_back(std::string() + "kappa_by_role" + '.' +
           std::to_string(sym1__));
       }
+      for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
+        param_names__.emplace_back(std::string() + "g_curve_est" + '.' +
+          std::to_string(sym1__));
+      }
+      param_names__.emplace_back(std::string() + "alpha_comm");
       param_names__.emplace_back(std::string() + "beta1");
       param_names__.emplace_back(std::string() + "beta2");
-      param_names__.emplace_back(std::string() + "beta3");
-      param_names__.emplace_back(std::string() + "beta4");
+      for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
+        for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
+          param_names__.emplace_back(std::string() + "V_term_calc" + '.' +
+            std::to_string(sym2__) + '.' + std::to_string(sym1__));
+        }
+      }
     }
     if (emit_generated_quantities__) {}
   }
@@ -1274,10 +2224,19 @@ public:
     }
     param_names__.emplace_back(std::string() + "log_beta1");
     param_names__.emplace_back(std::string() + "log_beta2");
-    param_names__.emplace_back(std::string() + "log_beta3");
-    param_names__.emplace_back(std::string() + "log_beta4");
-    param_names__.emplace_back(std::string() + "V_ref");
-    param_names__.emplace_back(std::string() + "V_rho");
+    param_names__.emplace_back(std::string() + "log_alpha_comm");
+    param_names__.emplace_back(std::string() + "gen_shape");
+    param_names__.emplace_back(std::string() + "gen_rate");
+    param_names__.emplace_back(std::string() + "Ct50");
+    param_names__.emplace_back(std::string() + "slope_ct");
+    for (int sym1__ = 1; sym1__ <= K_susc; ++sym1__) {
+      param_names__.emplace_back(std::string() + "beta_susc" + '.' +
+        std::to_string(sym1__));
+    }
+    for (int sym1__ = 1; sym1__ <= K_inf; ++sym1__) {
+      param_names__.emplace_back(std::string() + "beta_inf" + '.' +
+        std::to_string(sym1__));
+    }
     if (emit_transformed_parameters__) {
       for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
         param_names__.emplace_back(std::string() + "phi_by_role" + '.' +
@@ -1287,18 +2246,27 @@ public:
         param_names__.emplace_back(std::string() + "kappa_by_role" + '.' +
           std::to_string(sym1__));
       }
+      for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
+        param_names__.emplace_back(std::string() + "g_curve_est" + '.' +
+          std::to_string(sym1__));
+      }
+      param_names__.emplace_back(std::string() + "alpha_comm");
       param_names__.emplace_back(std::string() + "beta1");
       param_names__.emplace_back(std::string() + "beta2");
-      param_names__.emplace_back(std::string() + "beta3");
-      param_names__.emplace_back(std::string() + "beta4");
+      for (int sym1__ = 1; sym1__ <= T; ++sym1__) {
+        for (int sym2__ = 1; sym2__ <= N; ++sym2__) {
+          param_names__.emplace_back(std::string() + "V_term_calc" + '.' +
+            std::to_string(sym2__) + '.' + std::to_string(sym1__));
+        }
+      }
     }
     if (emit_generated_quantities__) {}
   }
   inline std::string get_constrained_sizedtypes() const {
-    return std::string("[{\"name\":\"log_phi_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_phi_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_kappa_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_kappa_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_beta1\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta2\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta3\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta4\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"V_ref\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"V_rho\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"phi_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"kappa_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"beta1\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta2\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta3\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta4\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"log_phi_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_phi_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_kappa_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_kappa_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_beta1\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta2\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_alpha_comm\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"gen_shape\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"gen_rate\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"Ct50\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"slope_ct\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"beta_susc\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(K_susc) + "},\"block\":\"parameters\"},{\"name\":\"beta_inf\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(K_inf) + "},\"block\":\"parameters\"},{\"name\":\"phi_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"kappa_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"g_curve_est\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(T) + "},\"block\":\"transformed_parameters\"},{\"name\":\"alpha_comm\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta1\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta2\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"V_term_calc\",\"type\":{\"name\":\"matrix\",\"rows\":" + std::to_string(N) + ",\"cols\":" + std::to_string(T) + "},\"block\":\"transformed_parameters\"}]");
   }
   inline std::string get_unconstrained_sizedtypes() const {
-    return std::string("[{\"name\":\"log_phi_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_phi_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_kappa_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_kappa_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_beta1\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta2\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta3\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta4\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"V_ref\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"V_rho\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"phi_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"kappa_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"beta1\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta2\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta3\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta4\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"}]");
+    return std::string("[{\"name\":\"log_phi_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_phi_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_kappa_by_role_raw\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(log_kappa_by_role_raw_1dim__) + "},\"block\":\"parameters\"},{\"name\":\"log_beta1\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_beta2\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"log_alpha_comm\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"gen_shape\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"gen_rate\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"Ct50\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"slope_ct\",\"type\":{\"name\":\"real\"},\"block\":\"parameters\"},{\"name\":\"beta_susc\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(K_susc) + "},\"block\":\"parameters\"},{\"name\":\"beta_inf\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(K_inf) + "},\"block\":\"parameters\"},{\"name\":\"phi_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"kappa_by_role\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(R) + "},\"block\":\"transformed_parameters\"},{\"name\":\"g_curve_est\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(T) + "},\"block\":\"transformed_parameters\"},{\"name\":\"alpha_comm\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta1\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"beta2\",\"type\":{\"name\":\"real\"},\"block\":\"transformed_parameters\"},{\"name\":\"V_term_calc\",\"type\":{\"name\":\"matrix\",\"rows\":" + std::to_string(N) + ",\"cols\":" + std::to_string(T) + "},\"block\":\"transformed_parameters\"}]");
   }
   // Begin method overload boilerplate
   template <typename RNG> inline void
@@ -1307,10 +2275,11 @@ public:
               emit_transformed_parameters = true, const bool
               emit_generated_quantities = true, std::ostream*
               pstream = nullptr) const {
-    const size_t num_params__ = (((((((log_phi_by_role_raw_1dim__ +
-      log_kappa_by_role_raw_1dim__) + 1) + 1) + 1) + 1) + 1) + 1);
-    const size_t num_transformed = emit_transformed_parameters * ((((((R + R)
-      + 1) + 1) + 1) + 1));
+    const size_t num_params__ = ((((((((((log_phi_by_role_raw_1dim__ +
+      log_kappa_by_role_raw_1dim__) + 1) + 1) + 1) + 1) + 1) + 1) + 1) +
+      K_susc) + K_inf);
+    const size_t num_transformed = emit_transformed_parameters * (((((((R +
+      R) + T) + 1) + 1) + 1) + (N * T)));
     const size_t num_gen_quantities = emit_generated_quantities * (0);
     const size_t num_to_write = num_params__ + num_transformed +
       num_gen_quantities;
@@ -1326,10 +2295,11 @@ public:
               emit_transformed_parameters = true, bool
               emit_generated_quantities = true, std::ostream*
               pstream = nullptr) const {
-    const size_t num_params__ = (((((((log_phi_by_role_raw_1dim__ +
-      log_kappa_by_role_raw_1dim__) + 1) + 1) + 1) + 1) + 1) + 1);
-    const size_t num_transformed = emit_transformed_parameters * ((((((R + R)
-      + 1) + 1) + 1) + 1));
+    const size_t num_params__ = ((((((((((log_phi_by_role_raw_1dim__ +
+      log_kappa_by_role_raw_1dim__) + 1) + 1) + 1) + 1) + 1) + 1) + 1) +
+      K_susc) + K_inf);
+    const size_t num_transformed = emit_transformed_parameters * (((((((R +
+      R) + T) + 1) + 1) + 1) + (N * T)));
     const size_t num_gen_quantities = emit_generated_quantities * (0);
     const size_t num_to_write = num_params__ + num_transformed +
       num_gen_quantities;
