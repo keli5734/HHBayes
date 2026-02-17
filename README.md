@@ -364,7 +364,7 @@ where the total force of infection combines community and household sources:
 
 $$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
 
-| Symbol | Meaning |
+| Parameter | Description |
 |---|---|
 | $\phi_{r_i}$ | Role-specific susceptibility multiplier |
 | $\kappa_{r_j}$ | Role-specific infectivity multiplier |
