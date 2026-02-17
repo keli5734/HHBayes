@@ -37,3 +37,5 @@ Suggests:
     RcppParallel (>= 5.0.1),
     cowplot
 VignetteBuilder: knitr
+URL: https://github.com/keli5734/HouseholdSim
+BugReports: https://github.com/keli5734/HouseholdSim/issues
