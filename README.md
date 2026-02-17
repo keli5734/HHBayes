@@ -21,7 +21,7 @@ Household transmission studies generate rich but complex data — repeated tests
 
 ```r
 # install.packages("devtools")
-devtools::install_github("yourusername/HHBayes")
+devtools::install_github("keli5734/HHBayes")
 ```
 
 ### Prerequisites
