@@ -180,18 +180,6 @@ prepare_stan_data <- function(df_clean,
     cols_to_keep <- c(cols_to_keep, all_covs)
   }
 
-  # df_meta_all <- df_clean %>%
-  #   dplyr::select(dplyr::all_of(cols_to_keep)) %>%
-  #   dplyr::distinct() %>%
-  #   dplyr::rename(hh_id = familyidstars, role = role_name) %>%
-  #   dplyr::filter(!is.na(role)) %>%
-  #   dplyr::mutate(
-  #     hh_num = as.numeric(gsub("\\D", "", hh_id)),
-  #     p_num  = as.numeric(person_id)
-  #   ) %>%
-  #   dplyr::arrange(hh_num, p_num) %>%
-  #   dplyr::select(-hh_num, -p_num)
-
 
   # --- STEP A: SAFE SORTING (NUMERIC AWARE) ---
   df_meta_all <- df_clean %>%

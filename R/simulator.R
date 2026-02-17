@@ -1,5 +1,4 @@
-#' @import dplyr
-#' @import stats
+
 #' @import deSolve
 NULL
 

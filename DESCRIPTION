@@ -1,5 +1,5 @@
 Package: HHBayes
-Title: An R package for simulating household transmission datasets and estimating parameters from real-world data.
+Title: Bayesian Household Transmission Modeling
 Version: 0.0.0.9000
 Authors@R: c(
   person(given = "Ke", family = "Li",
