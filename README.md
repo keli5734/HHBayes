@@ -111,9 +111,9 @@ Each simulated household is assembled randomly according to a demographic profil
 
 ```r
 household_profile <- list(
-  prob_adults   = c(0, 0, 1),        # Always 2 parents
-  prob_infant   = 1.0,               # Always 1 infant
-  prob_siblings = c(0, 0.8, 0.2),    # 80% chance of 1 toddler, 20% chance of 2
+  prob_adults   = c(0, 0, 1),        # 0% chance of 0 or one adult, 100% chance of two
+  prob_infant   = 1.0,               # 100% chance of one infant
+  prob_siblings = c(0, 0.8, 0.2),    # 80% chance of one toddler, 20% chance of two
   prob_elderly  = c(0.7, 0.1, 0.2)   # 70% no elderly, 10% one, 20% two
 )
 ```
@@ -359,25 +359,25 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 The daily probability of infection for susceptible individual *i* in household *h* at time *t* is:
 
 ```
-P(infection) = 1 - exp(-lambda_i(t))
+$$P(infection) = 1 - exp(-lambda_i(t))$$
 ```
 
 where:
 
 ```
-lambda_i(t) = phi[role_i] * modifier_i * (
+$$lambda_i(t) = phi[role_i] * modifier_i * (
     alpha_comm[role_i](t)
   + SUM_j { C[i,j] * kappa[role_j] * modifier_j * (beta1 + beta2 * f(VL_j(t))) }
-)
+)$$
 ```
 
 | Symbol | Meaning |
 |---|---|
-| phi | Role-specific susceptibility multiplier |
-| kappa | Role-specific infectivity multiplier |
-| alpha_comm(t) | Time-varying community importation rate |
-| C[i,j] | Contact weight between persons *i* and *j* |
-| f(VL) | Viral load scaling function (power-law or sigmoid) |
+| $phi$ | Role-specific susceptibility multiplier |
+| $kappa$ | Role-specific infectivity multiplier |
+| $alpha_comm(t)$ | Time-varying community importation rate |
+| $C[i,j]$ | Contact weight between persons *i* and *j* |
+| $f(VL)$ | Viral load scaling function (power-law or sigmoid) |
 | modifier | Intervention-driven reduction (e.g., `1 - efficacy`) |
 
 Individuals progress through **S -> I -> R -> S** with Gamma-distributed durations. Inference is performed via HMC in Stan (`adapt_delta = 0.95`, `max_treedepth = 15`).
