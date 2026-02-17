@@ -356,29 +356,23 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 
 ## Model Overview
 
-The daily probability of infection for susceptible individual *i* in household *h* at time *t* is:
+The daily probability of infection for susceptible individual $i$ in household $h$ at time $t$ is:
 
-```
-$$P(infection) = 1 - exp(-lambda_i(t))$$
-```
+$$P(\text{infection}_i(t)) = 1 - \exp\left(-\lambda_i(t)\right)$$
 
-where:
+where the total force of infection combines community and household sources:
 
-```
-$$lambda_i(t) = phi[role_i] * modifier_i * (
-    alpha_comm[role_i](t)
-  + SUM_j { C[i,j] * kappa[role_j] * modifier_j * (beta1 + beta2 * f(VL_j(t))) }
-)$$
-```
+$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
 
 | Symbol | Meaning |
 |---|---|
-| $phi$ | Role-specific susceptibility multiplier |
-| $kappa$ | Role-specific infectivity multiplier |
-| $alpha_comm(t)$ | Time-varying community importation rate |
-| $C[i,j]$ | Contact weight between persons *i* and *j* |
+| $\phi_{r_i}$ | Role-specific susceptibility multiplier |
+| $\kappa_{r_j}$ | Role-specific infectivity multiplier |
+| $\alpha_{\text{comm}}^{r}(t)$ | Time-varying community importation rate |
+| $C_{ij}$ | Contact weight between persons $i$ and $j$ |
 | $f(VL)$ | Viral load scaling function (power-law or sigmoid) |
-| modifier | Intervention-driven reduction (e.g., `1 - efficacy`) |
+| $m_i$ | Intervention-driven modifier (e.g., $1 - \text{efficacy}$) |
+
 
 Individuals progress through **S -> I -> R -> S** with Gamma-distributed durations. Inference is performed via HMC in Stan (`adapt_delta = 0.95`, `max_treedepth = 15`).
 
