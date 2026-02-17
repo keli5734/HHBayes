@@ -63,8 +63,11 @@ rates$primary_by_role
 
 # 3. Prepare data and fit the Bayesian model
 stan_input <- prepare_stan_data(sim$diagnostic_df,
-  study_start_date = as.Date("2024-07-01"),
-  study_end_date   = as.Date("2025-06-30"))
+                                use_vl_data      = 1,
+                                surveillance_df  = surveillance_data,
+                                study_start_date = as.Date("2024-07-01"),
+                                study_end_date   = as.Date("2025-06-30"),
+                                seed = 123)
   
 options(mc.cores = parallel::detectCores())
 
