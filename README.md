@@ -37,7 +37,7 @@ library(HHBayes)
 library(rstan)
 library(ggpubr)
 
-# 0. Generate survelliance dataset
+# 0. Generate surveillance dataset
 dates_weekly <- seq(from = as.Date(study_start), to = as.Date(study_end), by = "week")
 surveillance_data <- data.frame(
   date = dates_weekly,
