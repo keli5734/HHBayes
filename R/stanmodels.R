@@ -1,4 +1,4 @@
-#' @useDynLib HouseholdSim, .registration = TRUE
+#' @useDynLib HHBayes, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @import rstantools

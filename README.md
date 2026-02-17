@@ -34,6 +34,8 @@ HHBayes depends on [RStan](https://mc-stan.org/rstan/), which requires a working
 
 ```r
 library(HHBayes)
+library(rstan)
+library(ggpubr)
 
 # 1. Simulate 50 households with ODE-based viral dynamics
 sim <- simulate_multiple_households_comm(
