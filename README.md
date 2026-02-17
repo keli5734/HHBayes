@@ -399,4 +399,4 @@ MIT
 
 If you use HHBayes in your work, please cite:
 
-> [Your Name] (2025). HHBayes: Bayesian Household Transmission Modeling in R. GitHub: https://github.com/yourusername/HHBayes
+> Ke Li & Yiren Hou (2025). HHBayes: Bayesian Household Transmission Modeling in R. GitHub: https://github.com/yourusername/HHBayes
