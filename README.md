@@ -409,11 +409,8 @@ The model supports two modes controlled by `use_vl_data`:
 
 When viral load data is unavailable, time-varying infectiousness is captured by a Gamma-shaped generation interval curve $g(t)$:
 
-$$\lambda_i(t) = ... \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \frac{\kappa_{r_j} \cdot m_j} \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
 
-where:
-
-$$g(\tau) = \frac{\text{Gamma}(\tau \mid \gamma_{\text{shape}},\, \gamma_{\text{rate}})}{\max_\tau \text{Gamma}(\tau \mid \gamma_{\text{shape}},\, \gamma_{\text{rate}})}$$
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $\gamma_{\text{shape}}$, $\gamma_{\text{rate}}$
 
@@ -423,13 +420,13 @@ $$g(\tau) = \frac{\text{Gamma}(\tau \mid \gamma_{\text{shape}},\, \gamma_{\text{
 
 When viral load or Ct data is available, infectiousness is driven directly by the observed viral trajectory:
 
-$$\lambda_i(t) = ... \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
 
 where the dose-response function $f(\cdot)$ depends on the data type:
 
-- **Log10 viral load**: $\quad f(V) = \left(\frac{\max(0,\, V)}{C_{50}}\right)^{s}$
+- **Log10 viral load** (`vl_type = 1`): $\quad f(V) = \left(\frac{\max(0,\, V)}{C_{50}}\right)^{s}$
 
-- **Ct values**: $\quad f(V) = \frac{1}{1 + \exp\left(\frac{V - C_{50}}{s}\right)}$
+- **Ct values** (`vl_type = 0`): $\quad f(V) = \frac{1}{1 + \exp\left(\frac{V - C_{50}}{s}\right)}$
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $C_{50}$, $s$
 
