@@ -424,9 +424,9 @@ $$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot
 
 where the dose-response function $f(\cdot)$ depends on the data type:
 
-- **Log10 viral load** (`vl_type = 1`): $\quad f(V) = \left(\frac{V}{V_{ref}}\right)^{\rho}$
+- **Log10 viral load**: $\quad f(V) = \left(\frac{V}{V_{ref}}\right)^{\rho}$
 
-- **Ct values** (`vl_type = 0`): $\quad f(V) = \frac{1}{1 + \exp\left(\frac{Ct_{50}-V}{\sigma_{slope}}\right)}$
+- **Ct values**: $\quad f(V) = \frac{1}{1 + \exp\left(\frac{Ct_{50}-V}{\sigma_{slope}}\right)}$
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $V_{ref}$ or $Ct_{50}$, $\rho$ or $\sigma_{slope}$
 
