@@ -320,9 +320,9 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 |---|---|---|
 | `beta1` | `0.008` | Baseline within-household transmission rate (contact-driven). |
 | `beta2` | `0.008` | Viral-load-dependent transmission rate. Total per-infector force = `beta1 + beta2 * f(VL)`. |
-| `delta` | `0` | Household size scaling. Force scaled by `(1/N)^delta` in larger households. |
+| `delta` | `0` | Household size scaling. Force scaled by `(1/max(n_h,1))^delta` in larger households. |
 | `alpha_comm_by_role` | `5e-4` | Daily community acquisition rate. |
-| `phi_by_role` | `c(adult=1, infant=4, toddler=5, elderly=1)` | Susceptibility multipliers by role. |
+| `phi_by_role` | `c(adult=1, infant=3, toddler=4, elderly=1)` | Susceptibility multipliers by role. |
 | `kappa_by_role` | `c(adult=1, infant=1, toddler=1.2, elderly=1)` | Infectivity multipliers by role. |
 
 ### Infectious Period and Immunity
