@@ -114,9 +114,9 @@ By default, all household members contact each other equally. A `role_mixing_mat
 ```r
 role_mixing_weights <- matrix(c(
 # Target: Infant Toddler Adult Elderly
-          0.0,   0.5,    1.0,  0.5,    # Source: Infant  (high contact with adults/caregivers)
+          0.0,   0.5,    1.0,  0.5,    # Source: Infant  (high contact with adults)
           0.5,   0.9,    0.7,  0.5,    # Source: Toddler (high peer contact)
-          1.0,   0.7,    0.6,  0.7,    # Source: Adult   (caregiver role)
+          1.0,   0.7,    0.6,  0.7,    # Source: Adult    
           0.5,   0.5,    0.7,  0.0     # Source: Elderly (limited infant contact)
 ), nrow = 4, byrow = TRUE,
    dimnames = list(
