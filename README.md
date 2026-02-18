@@ -1,5 +1,10 @@
 # HHBayes <img src="man/figures/logo.png" align="right" height="139" />
 
+<!-- badges: start -->
+[![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/keli5734/HHBayes)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+<!-- badges: end -->
+
 > **Bayesian Household Transmission Modeling in R**
 
 **HHBayes** is an R package for simulating and estimating infectious disease transmission within households. It couples a stochastic, age-structured household simulator with Bayesian inference via [Stan](https://mc-stan.org/), enabling researchers to study within-household spread, evaluate intervention strategies, and reconstruct transmission chains from longitudinal diagnostic data.
