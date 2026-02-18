@@ -484,6 +484,11 @@ When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not e
 
 MIT
 
+## Authors
+
+- **Ke Li** — Package creator and maintainer
+- **Yiren Hou** — Package creator and maintainer
+
 ## Citation
 
 If you use HHBayes in your work, please cite:
