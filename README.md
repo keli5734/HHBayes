@@ -379,7 +379,7 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 
 The daily probability of infection for susceptible individual $i$ in household $h$ at time $t$ is:
 
-$$P(\text{infection}_i(t)) = 1 - \exp\left(-\lambda_i(t)\right)$$
+$$P(\text{infection}_{ih}(t)) = 1 - \exp\left(-\lambda_{ih}(t)\right)$$
 
 where the total force of infection combines community and household sources:
 
