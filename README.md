@@ -409,7 +409,7 @@ The model supports two modes controlled by `use_vl_data`:
 
 When viral load data is unavailable, time-varying infectiousness is captured by a Gamma-shaped generation interval curve $g(t)$:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \frac{\kappa_{r_j} \cdot m_j} \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
+$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
 
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $\gamma_{\text{shape}}$, $\gamma_{\text{rate}}$
@@ -420,15 +420,15 @@ $$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot
 
 When viral load or Ct data is available, infectiousness is driven directly by the observed viral trajectory:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
+$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
 
 where the dose-response function $f(\cdot)$ depends on the data type:
 
-- **Log10 viral load** (`vl_type = 1`): $\quad f(V) = \left(\frac{\max(0,\, V)}{C_{50}}\right)^{s}$
+- **Log10 viral load** (`vl_type = 1`): $\quad f(V) = \left(\frac{V}{V_{ref}}\right)^{\rho}$
 
-- **Ct values** (`vl_type = 0`): $\quad f(V) = \frac{1}{1 + \exp\left(\frac{V - C_{50}}{s}\right)}$
+- **Ct values** (`vl_type = 0`): $\quad f(V) = \frac{1}{1 + \exp\left(\frac{Ct_{50}-V}{\sigma_{slope}}\right)}$
 
-**Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $C_{50}$, $s$
+**Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $V_{ref}$ or $Ct_{50}$, $\rho$ or $\sigma_{slope}$
 
 ---
 
