@@ -383,7 +383,7 @@ $$P(\text{infection}_i(t)) = 1 - \exp\left(-\lambda_i(t)\right)$$
 
 where the total force of infection combines community and household sources:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
 
 | Parameter | Description |
 |---|---|
@@ -409,7 +409,7 @@ The model supports two modes controlled by `use_vl_data`:
 
 When viral load data is unavailable, time-varying infectiousness is captured by a Gamma-shaped generation interval curve $g(t)$:
 
-$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left(\alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
 
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $\gamma_{\text{shape}}$, $\gamma_{\text{rate}}$
@@ -420,7 +420,7 @@ $$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t)
 
 When viral load or Ct data is available, infectiousness is driven directly by the observed viral trajectory:
 
-$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \frac{\kappa_{r_j} \cdot m_j}{N_h^\delta} \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
 
 where the dose-response function $f(\cdot)$ depends on the data type:
 
