@@ -401,6 +401,54 @@ Individuals progress through **S -> I -> R -> S** with Gamma-distributed duratio
 
 ---
 
+## Estimated Parameters
+
+The Stan model jointly estimates a core set of parameters, plus optional parameters that activate based on the data you supply to `prepare_stan_data()`.
+
+### Always estimated
+
+| Parameter | Description |
+|---|---|
+| $\beta_1$ | Baseline within-household transmission rate |
+| $\beta_2$ | Viral-load-dependent transmission rate |
+| $\alpha_{\text{comm}}$ | Community importation rate |
+| $\phi_{\text{role}}$ | Role-specific susceptibility multipliers (role 1 = reference = 1.0) |
+| $\kappa_{\text{role}}$ | Role-specific infectivity multipliers (role 1 = reference = 1.0) |
+
+
+### Conditionally estimated
+
+| Parameter | Description | Activated when |
+|---|---|---|
+| $C_{50}$, $s$ | Viral load dose-response curve | `use_vl_data = 1` |
+| $\gamma_{\text{shape}}, \gamma_{\text{rate}}$ | Gamma distribution for infectious period | `use_vl_data = 0` |
+| $\beta_{\text{susc}}$ | Covariate effects on susceptibility | `covariates_susceptibility` is provided |
+| $\beta_{\text{inf}}$ | Covariate effects on infectivity | `covariates_infectivity` is provided |
+
+
+### Example
+```r
+# Baseline: no covariates → estimates core params + VL curve only
+stan_input <- prepare_stan_data(
+  ...,
+  use_vl_data = 1,
+  covariates_susceptibility = NULL,
+  covariates_infectivity    = NULL
+)
+
+# With covariates → also estimates vaccine/masking effects
+stan_input <- prepare_stan_data(
+  ...,
+  use_vl_data = 1,
+  covariates_susceptibility = c("vacc_status"),
+  covariates_infectivity    = c("vacc_status", "masked")
+)
+```
+
+When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not enter the model. This means the same Stan model adapts automatically — no need to switch between different model files.
+
+---
+
 ## License
 
 MIT

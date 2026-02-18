@@ -227,7 +227,7 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
       if(stan_data$use_vl_data == 0) {
         term_combined <- p_beta1 + (p_beta2 * val_g)
       } else {
-        term_combined <- (p_beta1 * val_g) + (p_beta2 * val_v)
+        term_combined <- p_beta1 + (p_beta2 * val_v)
       }
 
       # --- NEW: Calculate Source Infectivity (Kappa * Covariates) ---
