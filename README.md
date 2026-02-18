@@ -383,13 +383,14 @@ $$P(\text{infection}_i(t)) = 1 - \exp\left(-\lambda_i(t)\right)$$
 
 where the total force of infection combines community and household sources:
 
-$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}}^{r_i}(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
+$$\lambda_i(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + \sum_{j \in \mathcal{H}_h} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
 
 | Parameter | Description |
 |---|---|
 | $\phi_{r_i}$ | Role-specific susceptibility multiplier |
 | $\kappa_{r_j}$ | Role-specific infectivity multiplier |
-| $\alpha_{\text{comm}}^{r}(t)$ | Time-varying community importation rate |
+| $\alpha_{\text{comm}}$ | Baseline Community risk |
+| $S(t)$ | Seasonal forcing term |
 | $C_{ij}$ | Contact weight between persons $i$ and $j$ |
 | $f(VL)$ | Viral load scaling function (power-law or sigmoid) |
 | $m_i$ | Intervention-driven modifier (e.g., $1 - \text{efficacy}$) |
