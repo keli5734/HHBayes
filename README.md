@@ -383,7 +383,7 @@ $$P(\text{infection}_{ih}(t)) = 1 - \exp\left(-\lambda_{ih}(t)\right)$$
 
 where the total force of infection combines community and household sources:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot \mathbf{X}_{\text{susc},i}) \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot \exp(\boldsymbol{\beta}_{\text{inf}} \cdot \mathbf{X}_{\text{inf},j}) \cdot \left(\beta_1 + \beta_2 \cdot f(VL_j(t))\right) \right)$$
 
 | Parameter | Description |
 |---|---|
@@ -394,10 +394,37 @@ $$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot
 | $\delta$ | Household size scaling |
 | $C_{ij}$ | Contact weight between persons $i$ and $j$ |
 | $f(VL)$ | Viral load scaling function (power-law or sigmoid) |
-| $m_i$ | Intervention-driven modifier (e.g., $1 - \text{efficacy}$) |
+| $\boldsymbol{\beta}_{\text{susc}}$ | Log-linear coefficients for susceptibility covariates |
+| $\boldsymbol{\beta}_{\text{inf}}$ | Log-linear coefficients for infectivity covariates |
+| $\mathbf{X}_{\text{susc},i}$ | Covariate vector for person $i$ (susceptibility) |
+| $\mathbf{X}_{\text{inf},j}$ | Covariate vector for person $j$ (infectivity) |
 
 
-Individuals progress through **S -> I -> R -> S** with Gamma-distributed durations. Inference is performed via HMC in Stan (`adapt_delta = 0.95`, `max_treedepth = 15`).
+Individuals progress through **S -> I -> R -> S** with Gamma-distributed duration. Inference is performed via HMC in Stan (`adapt_delta = 0.95`, `max_treedepth = 15`).
+
+---
+
+#### **How Covariate Effects Work**
+
+The simulation applies **fixed efficacies** during data generation, but the Stan model estimates **log-linear coefficients** to recover those effects:
+
+**Simulation time:**
+```r
+# Vaccination reduces susceptibility by 50%
+if (vaccinated) susceptibility *= 0.5
+```
+
+**Stan estimation:**
+```r
+# Stan estimates β_susc ≈ -0.693, because exp(-0.693) ≈ 0.5
+susceptibility = φ_role × exp(β_susc × vacc_status)
+```
+
+**Interpretation:**
+- `β = 0`: No effect (`exp(0) = 1`)  
+- `β = -0.693`: 50% reduction (`exp(-0.693) ≈ 0.5`)
+- `β = +0.693`: 2× increase (`exp(0.693) ≈ 2.0`)
+- Multiple covariates: Effects multiply on natural scale, add on log scale
 
 ---
 
@@ -437,7 +464,6 @@ where the dose-response function $f(\cdot)$ depends on the data type:
 The Stan model jointly estimates a core set of parameters, plus optional parameters that activate based on the data you supply to `prepare_stan_data()`.
 
 ### Always estimated
-
 | Parameter | Description |
 |---|---|
 | $\beta_1$ | Baseline within-household transmission rate |
@@ -446,15 +472,17 @@ The Stan model jointly estimates a core set of parameters, plus optional paramet
 | $\phi_{\text{role}}$ | Role-specific susceptibility multipliers (role 1 = reference = 1.0) |
 | $\kappa_{\text{role}}$ | Role-specific infectivity multipliers (role 1 = reference = 1.0) |
 
-
 ### Conditionally estimated
-
 | Parameter | Description | Activated when |
 |---|---|---|
 | $C_{50}$, $s$ | Viral load dose-response curve | `use_vl_data = 1` |
 | $\gamma_{\text{shape}}, \gamma_{\text{rate}}$ | Gamma distribution for infectious period | `use_vl_data = 0` |
-| $\beta_{\text{susc}}$ | Covariate effects on susceptibility | `covariates_susceptibility` is provided |
-| $\beta_{\text{inf}}$ | Covariate effects on infectivity | `covariates_infectivity` is provided |
+| $\boldsymbol{\beta}_{\text{susc}}$ | **Log-linear coefficients** for susceptibility covariates | `covariates_susceptibility` is provided |
+| $\boldsymbol{\beta}_{\text{inf}}$ | **Log-linear coefficients** for infectivity covariates | `covariates_infectivity` is provided |
+
+# If Stan estimates β_susc = -0.693 for vaccination:
+# This means vaccinated individuals have susceptibility = φ_role × exp(-0.693) ≈ φ_role × 0.5
+# Recovering the 50% efficacy used in simulation
 
 
 ### Example
