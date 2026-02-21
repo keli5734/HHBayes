@@ -416,8 +416,8 @@ if (vaccinated) susceptibility *= 0.5
 
 **Stan estimation:**
 ```r
-# Stan estimates β_susc ≈ -0.693, because exp(-0.693) ≈ 0.5
-susceptibility = φ_role × exp(β_susc × vacc_status)
+# Stan estimates beta_susc ≈ -0.693, because exp(-0.693) ≈ 0.5  
+susceptibility = phi_role * exp(beta_susc * vacc_status)
 ```
 
 **Interpretation:**
@@ -436,7 +436,7 @@ The model supports two modes controlled by `use_vl_data`:
 
 When viral load data is unavailable, time-varying infectiousness is captured by a Gamma-shaped generation interval curve $g(t)$:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left(\alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot \mathbf{X}_{\text{susc},i}) \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot \exp(\boldsymbol{\beta}_{\text{inf}} \cdot \mathbf{X}_{\text{inf},j}) \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
 
 
 **Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $\gamma_{\text{shape}}$, $\gamma_{\text{rate}}$
@@ -447,7 +447,7 @@ $$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left(\alpha_{\text{comm}} \cdot 
 
 When viral load or Ct data is available, infectiousness is driven directly by the observed viral trajectory:
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot m_i \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot m_j \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
+$$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot \mathbf{X}_{\text{susc},i}) \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot \exp(\boldsymbol{\beta}_{\text{inf}} \cdot \mathbf{X}_{\text{inf},j}) \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
 
 where the dose-response function $f(\cdot)$ depends on the data type:
 
@@ -479,10 +479,6 @@ The Stan model jointly estimates a core set of parameters, plus optional paramet
 | $\gamma_{\text{shape}}, \gamma_{\text{rate}}$ | Gamma distribution for infectious period | `use_vl_data = 0` |
 | $\boldsymbol{\beta}_{\text{susc}}$ | **Log-linear coefficients** for susceptibility covariates | `covariates_susceptibility` is provided |
 | $\boldsymbol{\beta}_{\text{inf}}$ | **Log-linear coefficients** for infectivity covariates | `covariates_infectivity` is provided |
-
-# If Stan estimates β_susc = -0.693 for vaccination:
-# This means vaccinated individuals have susceptibility = φ_role × exp(-0.693) ≈ φ_role × 0.5
-# Recovering the 50% efficacy used in simulation
 
 
 ### Example
