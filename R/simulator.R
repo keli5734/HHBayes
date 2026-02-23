@@ -480,7 +480,7 @@ simulate_one_household_comm <- function(hh_id,
 #' @param contact_mat Matrix. Custom contact matrix between individuals. NULL for default.
 #' @param role_mixing_matrix Matrix. Contact weights between roles. 4x4 Matrix where element (i,j) represents
 #'   contact weight FROM role j TO role i. For asymmetric patterns,
-#'   role_mixing_matrix(adult, infant) ≠ role_mixing_matrix(infant, adult).
+#'   role_mixing_matrix(adult, infant) != role_mixing_matrix(infant, adult).
 #'   Use dimnames(role_mixing_matrix) <- list(role_levels, role_levels). NULL for default.
 #' @param model_type Character. Either "empirical" or "ODE". Defaults to "empirical".
 #' @param ODE_params_list List of ODE parameters by role. NULL for defaults.

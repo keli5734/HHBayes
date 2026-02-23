@@ -110,9 +110,9 @@ simulate_multiple_households_comm(
 
 \item{contact_mat}{Matrix. Custom contact matrix between individuals. NULL for default.}
 
-\item{role_mixing_matrix}{Matrix. Contact weights between roles. 4x4 Matrix where element \link{i,j} represents
+\item{role_mixing_matrix}{Matrix. Contact weights between roles. 4x4 Matrix where element (i,j) represents
 contact weight FROM role j TO role i. For asymmetric patterns,
-role_mixing_matrix\link{adult, infant} ≠ role_mixing_matrix\link{infant, adult}.
+role_mixing_matrix(adult, infant) != role_mixing_matrix(infant, adult).
 Use dimnames(role_mixing_matrix) <- list(role_levels, role_levels). NULL for default.}
 
 \item{model_type}{Character. Either "empirical" or "ODE". Defaults to "empirical".}
