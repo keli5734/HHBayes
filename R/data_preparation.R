@@ -14,6 +14,9 @@
 #' @param imputation_params List of parameters for mechanistic viral curves (Cpeak, r, d, t_peak) by role.
 #' @param model_type String, either "empirical" or "ODE".
 #' @param ODE_params_list List of ODE parameters (beta, delta, etc.) by role.
+#' @param delta Numeric. Household size scaling parameter.
+#'   When delta > 0, transmission rates are scaled by (1/max(household_size, 1))^delta.
+#'   Should match the value used in simulation. Defaults to 0 (no scaling).
 #' @param role_mixing_matrix 4x4 Matrix defining contact weights between roles.
 #' @param seed Integer. Random seed for reproducibility. Defaults to 123.
 #'
@@ -33,6 +36,8 @@ prepare_stan_data <- function(df_clean,
 
                               model_type = "empirical", # "empirical" or "ODE"
                               ODE_params_list = NULL,   # Required if model_type="ODE"
+
+                              delta = 0,
 
                               # --- CONTACT ARGUMENT ---
                               role_mixing_matrix = NULL,
@@ -67,8 +72,8 @@ prepare_stan_data <- function(df_clean,
   p_beta2 <- parse_prior(priors$beta2, 1, c(-5, 1))
   p_alpha <- parse_prior(priors$alpha, 1, c(-6, 2))
   p_cov   <- parse_prior(priors$covariates, 1, c(0, 1))
-  p_shape <- parse_prior(priors$gen_shape, 1, c(5.0, 2.0))
-  p_rate  <- parse_prior(priors$gen_rate,  1, c(1.0, 0.5))
+  p_shape <- parse_prior(priors$gen_shape, 3, c(log(3.0), 0.2))
+  p_rate  <- parse_prior(priors$gen_rate,  3, c(log(0.5), 0.2))
   p_ct50  <- parse_prior(priors$ct50,      1, c(35.0, 3.0))
   p_slope <- parse_prior(priors$slope,     1, c(1.5, 1.0))
 
@@ -402,32 +407,6 @@ prepare_stan_data <- function(df_clean,
   contact_tgt <- integer()
   contact_w   <- numeric()
 
-  # for(h in hh_ids) {
-  #   # Get members of this household
-  #   members <- df_model_full[df_model_full$hh_id_int == h, ]
-  #   member_indices <- members$i_idx # Global index (1 to N)
-  #   member_roles   <- members$role
-  #
-  #   # Generate Matrix based on user input or default
-  #   if(!is.null(role_mixing_matrix)) {
-  #     mat <- generate_contact_matrix_from_roles(member_roles, role_mixing_matrix)
-  #   } else {
-  #     # Default: Homogeneous Mixing
-  #     n_h <- length(member_indices)
-  #     mat <- matrix(1, n_h, n_h); diag(mat) <- 0
-  #   }
-  #
-  #   # Flatten to Sparse Format
-  #   for(r in 1:nrow(mat)) {
-  #     for(c in 1:ncol(mat)) {
-  #       if(mat[r,c] > 0) {
-  #         contact_tgt <- c(contact_tgt, member_indices[r]) # Row = Target
-  #         contact_src <- c(contact_src, member_indices[c]) # Col = Source
-  #         contact_w   <- c(contact_w,   mat[r,c])
-  #       }
-  #     }
-  #   }
-  # }
 
   for(h in hh_ids) {
     # Get members of this household
@@ -510,7 +489,7 @@ prepare_stan_data <- function(df_clean,
   # =========================================================
 
   list(
-    N = N, T = T_max, H = H, R = length(role_levels), delta = 0,
+    N = N, T = T_max, H = H, R = length(role_levels), delta = delta,
     hh_id = df_model_full$hh_id_int,
     role_id = match(df_model_full$role, role_levels),
     I = I, Y = Y, V = V,

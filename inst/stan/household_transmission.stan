@@ -8,7 +8,7 @@ data {
 
   // --- FLAGS ---
   int<lower=0, upper=1> use_vl_data;     // 1 = Use Viral Load, 0 = Use simple curve
-  int<lower=0, upper=1> vl_type;         // 0 = Log10, 1 = Ct
+  int<lower=0, upper=1> vl_type;         // 1 = Log10, 0 = Ct
   int<lower=0, upper=1> use_curve_logic; // 1 = Use Gamma Curve Fallback
 
   // --- INDEXING ---
@@ -113,7 +113,7 @@ transformed parameters {
   {
     vector[T] raw_curve;
     for(d in 1:T) raw_curve[d] = exp(gamma_lpdf(d | gen_shape, gen_rate));
-    g_curve_est = raw_curve / max(raw_curve);
+    g_curve_est = raw_curve / sum(raw_curve);
   }
 
   // 4. Pre-calculate Viral Term (V_term) for the whole matrix

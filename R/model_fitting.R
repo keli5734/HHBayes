@@ -25,30 +25,44 @@ fit_household_model <- function(stan_data,
   # the sampler from starting in a region with 0 likelihood.
   if (is.null(init_fun)) {
     init_fun <- function() {
-      list(
-        log_beta1 = -5.3,  # Approx log(0.005)
-        log_beta2 = -5.3,
+      # Get dimensions from stan_data
+      R <- stan_data$R
+      K_susc <- stan_data$K_susc
+      K_inf <- stan_data$K_inf
 
-        # Initialize multipliers near 1.0 (log scale 0) to start neutral
-        # We check the size of R to ensure the vector length is correct
-        log_phi_by_role_raw = rep(0.1, max(1, stan_data$R - 1)),
-        log_kappa_by_role_raw = rep(0.1, max(1, stan_data$R - 1)),
+      init_list <- list(
+        # Core transmission parameters (log scale for rates)
+        log_beta1 = log(0.008),           # ~8e-3 baseline transmission
+        log_beta2 = log(0.008),           # ~8e-3 VL-dependent transmission
+        log_alpha_comm = log(5e-4),       # ~5e-4 community rate (CRITICAL!)
 
-        # Viral Load parameters (if used)
-        V_ref = 3.0,
-        V_rho = 2.5,
+        # Role-specific effects (R-1 parameters, relative to reference)
+        # Start at reference level (0 on log scale = 1.0 on natural scale)
+        log_phi_by_role_raw = rep(0.1, max(1, R - 1)),     # Small positive to avoid exact 0
+        log_kappa_by_role_raw = rep(0.1, max(1, R - 1)),   # Small positive to avoid exact 0
 
-        # Community infection rate (if estimated)
-        log_beta3 = 0, # Placeholder for antibody effects if active
-        log_beta4 = 0
+        # Viral dynamics parameters (must respect Stan bounds)
+        gen_shape = 3.0,                  # Within bounds [1.0, 20.0]
+        gen_rate = 1.0,                   # Within bounds [0.1, 5.0]
+        Ct50 = 35.0,                      # Reasonable Ct threshold
+        slope_ct = 2.0                    # Moderate slope for sigmoid
       )
+
+      # Conditional covariate effects (only add if covariates are present)
+      if (K_susc > 0) {
+        init_list$beta_susc <- rep(0.0, K_susc)  # Start at no effect
+      }
+      if (K_inf > 0) {
+        init_list$beta_inf <- rep(0.0, K_inf)    # Start at no effect
+      }
+
+      return(init_list)
     }
   }
 
   # 2. Run Sampler
   # NOTE: We use 'stanmodels$household_transmission' which is the pre-compiled object
   # created by the package. We do NOT refer to the .stan file path directly.
-
   out <- rstan::sampling(
     object = stanmodels$household_transmission,
     data = stan_data,

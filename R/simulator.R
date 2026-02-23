@@ -111,6 +111,12 @@ generate_household_roles <- function(country_profile) {
   n_elderly <- sample(0:2, 1, prob = profile$prob_elderly)
   if(n_elderly > 0) roles <- c(roles, rep("elderly", n_elderly))
 
+  # ADD this at the end, before return:
+  if (length(roles) == 0) {
+    warning("Generated empty household - forcing at least one adult")
+    roles <- c("adult")
+  }
+
   return(roles)
 }
 
@@ -175,6 +181,23 @@ simulate_one_household_comm <- function(hh_id,
 
   n <- length(roles)
 
+  # Guard against empty households
+  if (n == 0) {
+    return(list(
+      hh_df = data.frame(
+        hh_id = character(0), person_id = integer(0), role = character(0),
+        infection_time = as.Date(character(0)), infectious_end = as.Date(character(0)),
+        resolved_time = as.Date(character(0)), stringsAsFactors = FALSE
+      ),
+      diagnostic_df = data.frame(
+        hh_id = character(0), person_id = integer(0), role = character(0),
+        day_index = integer(0), pcr_sample = numeric(0), test_result = integer(0),
+        episode_id = integer(0), stringsAsFactors = FALSE
+      )
+    ))
+  }
+
+
   infection_history       <- vector("list", n)
   infectious_end_history <- vector("list", n)
   immunity_end_history   <- vector("list", n)
@@ -196,7 +219,7 @@ simulate_one_household_comm <- function(hh_id,
   kappa_vec <- kappa_by_role[roles]
 
   if (is.null(contact_mat)) {
-    contact_mat <- matrix(1, n, n); diag(contact_mat) <- 1
+    contact_mat <- matrix(1, n, n); diag(contact_mat) <- 0
   }
 
   household_detected <- FALSE
@@ -207,7 +230,7 @@ simulate_one_household_comm <- function(hh_id,
   for (t in 1:max_days) {
 
     # --- A. Update States ---
-    for(i in 1:n) {
+    for(i in seq_len(n)) {
       if(current_status[i] != 0 && !is.na(time_next_state[i]) && t >= time_next_state[i]) {
         st <- current_status[i]
         if(st == 1) { # I -> R
@@ -328,7 +351,7 @@ simulate_one_household_comm <- function(hh_id,
   # ==============================================================================
 
   hh_rows <- list()
-  for(i in 1:n) {
+  for(i in seq_len(n)) {
     hist <- infection_history[[i]]
     base_row <- data.frame(hh_id=hh_id, person_id=i, role=roles[i], stringsAsFactors=F)
 
@@ -362,7 +385,7 @@ simulate_one_household_comm <- function(hh_id,
   res_matrix <- matrix(if(viral_testing=="viral load") 0 else 45, nrow=n, ncol=n_tests)
   ep_matrix <- matrix(0, nrow=n, ncol=n_tests)
 
-  for(i in 1:n) {
+  for(i in seq_len(n)) {
     hist <- infection_history[[i]]
     if(!is.null(hist)) {
       for(k in seq_along(hist)) {
@@ -399,7 +422,7 @@ simulate_one_household_comm <- function(hh_id,
   }
 
   diag_df_list <- vector("list", n)
-  for(i in 1:n) {
+  for(i in seq_len(n)) {
     vals <- res_matrix[i, ]
     eps  <- ep_matrix[i, ]
     results <- if(viral_testing=="viral load") as.integer(vals >= detect_threshold_log10) else as.integer(vals <= detect_threshold_Ct)
@@ -455,7 +478,10 @@ simulate_one_household_comm <- function(hh_id,
 #' @param household_profile_list List defining household composition probabilities. NULL for defaults.
 #' @param perfect_detection Logical. Whether detection is perfect. Defaults to TRUE.
 #' @param contact_mat Matrix. Custom contact matrix between individuals. NULL for default.
-#' @param role_mixing_matrix Matrix. Contact weights between roles. NULL for default.
+#' @param role_mixing_matrix Matrix. Contact weights between roles. 4x4 Matrix where element [i,j] represents
+#'   contact weight FROM role j TO role i. For asymmetric patterns,
+#'   role_mixing_matrix[adult, infant] ≠ role_mixing_matrix[infant, adult].
+#'   Use dimnames(role_mixing_matrix) <- list(role_levels, role_levels). NULL for default.
 #' @param model_type Character. Either "empirical" or "ODE". Defaults to "empirical".
 #' @param ODE_params_list List of ODE parameters by role. NULL for defaults.
 #' @param covariates_config List defining covariate configurations. NULL for none.
@@ -554,7 +580,7 @@ simulate_multiple_households_comm <- function(n_households = 50,
     if (!is.null(covariates_config)) {
       for (cov in covariates_config) {
         col_vec <- numeric(n_hh)
-        for (i in 1:n_hh) {
+        for (i in seq_len(n_hh)) {
           prob <- cov$coverage[[roles[i]]]
           if (is.null(prob)) prob <- 0
           col_vec[i] <- rbinom(1, 1, prob)

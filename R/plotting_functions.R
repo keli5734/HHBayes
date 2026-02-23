@@ -129,7 +129,7 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
   post <- rstan::extract(fit)
   p_beta1 <- median(post$beta1)
   p_beta2 <- median(post$beta2)
-  p_alpha <- mean(post$alpha_comm)
+  p_alpha <- median(post$alpha_comm)
 
   p_gen_shape <- median(post$gen_shape)
   p_gen_rate  <- median(post$gen_rate)

@@ -16,6 +16,7 @@ prepare_stan_data(
   covariates_infectivity = NULL,
   model_type = "empirical",
   ODE_params_list = NULL,
+  delta = 0,
   role_mixing_matrix = NULL,
   recovery_params = NULL,
   imputation_params = NULL,
@@ -45,6 +46,10 @@ prepare_stan_data(
 \item{model_type}{String, either "empirical" or "ODE".}
 
 \item{ODE_params_list}{List of ODE parameters (beta, delta, etc.) by role.}
+
+\item{delta}{Numeric. Household size scaling parameter.
+When delta > 0, transmission rates are scaled by (1/max(household_size, 1))^delta.
+Should match the value used in simulation. Defaults to 0 (no scaling).}
 
 \item{role_mixing_matrix}{4x4 Matrix defining contact weights between roles.}
 
