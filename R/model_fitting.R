@@ -19,6 +19,7 @@ fit_household_model <- function(stan_data,
                                 warmup = 1000,
                                 init_fun = NULL,
                                 ...) {
+
   if (is.null(init_fun)) {
     init_fun <- function() {
       R <- stan_data$R
@@ -26,33 +27,39 @@ fit_household_model <- function(stan_data,
       K_inf <- stan_data$K_inf
 
       init_list <- list(
-        # Core transmission parameters
+        # Always needed
         log_beta1 = log(0.008),
         log_beta2 = log(0.008),
         log_alpha_comm = log(5e-4),
-
-        # Role-specific effects
         log_phi_by_role_raw = rep(0.1, max(1, R - 1)),
-        log_kappa_by_role_raw = rep(0.1, max(1, R - 1)),
-
-        # ALL viral dynamics parameters (always declared in Stan)
-        gen_shape = 3.0,
-        gen_rate = 1.0,
-        Ct50 = 35.0,
-        slope_ct = 2.0,
-        V_ref = 3.0,                      # ← ADD THIS
-        rho = 2.5                         # ← ADD THIS
+        log_kappa_by_role_raw = rep(0.1, max(1, R - 1))
       )
 
-      # Conditional covariate effects
+      # Add covariate effects if present
       if (K_susc > 0) init_list$beta_susc <- rep(0.0, K_susc)
       if (K_inf > 0) init_list$beta_inf <- rep(0.0, K_inf)
+
+      # CONDITIONAL INITIALIZATION
+      if (stan_data$use_curve_logic == 1) {
+        init_list$gen_shape_raw <- array(3.0, dim = 1)
+        init_list$gen_rate_raw <- array(1.0, dim = 1)
+      }
+
+      if (stan_data$use_vl_data == 1 && stan_data$vl_type == 0) {
+        init_list$Ct50_raw <- array(35.0, dim = 1)
+        init_list$slope_ct_raw <- array(2.0, dim = 1)
+      }
+
+      if (stan_data$use_vl_data == 1 && stan_data$vl_type == 1) {
+        init_list$V_ref_raw <- array(3.0, dim = 1)
+        init_list$rho_raw <- array(2.5, dim = 1)
+      }
 
       return(init_list)
     }
   }
 
-  # Run sampler (unchanged)
+  # Run sampler
   out <- rstan::sampling(
     object = stanmodels$household_transmission,
     data = stan_data,
