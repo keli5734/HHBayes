@@ -242,11 +242,15 @@ my_priors <- list(
   beta1     = list(dist = "normal",    params = c(-5, 1)),    # log-transmission rate 1
   beta2     = list(dist = "normal",    params = c(-5, 1)),    # log-transmission rate 2
   alpha     = list(dist = "normal",    params = c(-4, 1)),    # log-community rate
+  phi_role  = list(dist = "normal",    params = c(0, 1)),     # NEW: Role susceptibility effects
+  kappa_role= list(dist = "lognormal", params = c(0, 0.3)),   # NEW: Role infectivity effects
+  V_ref     = list(dist = "uniform",   params = c(2, 4)),     # NEW: Log10 VL reference
+  rho       = list(dist = "normal",    params = c(2.5, 0.5)), # NEW: Log10 VL exponent
   covariates = list(dist = "normal",   params = c(0, 2)),     # covariate coefficients
   gen_shape = list(dist = "lognormal", params = c(1.5, 0.5)), # generation interval shape
   gen_rate  = list(dist = "lognormal", params = c(0.0, 0.5)), # generation interval rate
-  ct50      = list(dist = "normal",    params = c(3, 1)),     # VL reference point
-  slope     = list(dist = "lognormal", params = c(0.4, 0.5))  # VL dose-response slope
+  ct50      = list(dist = "normal",    params = c(35, 2)),    # Ct reference point
+  slope     = list(dist = "lognormal", params = c(0.4, 0.5))  # Ct dose-response slope
 )
 ```
 
@@ -269,11 +273,12 @@ stan_input <- prepare_stan_data(
   surveillance_df  = surveillance_data,
   study_start_date = as.Date(study_start),
   study_end_date   = as.Date(study_end),
-  use_vl_data      = 1,
+  use_vl_data      = TRUE,
+  use_curve_logic  = FALSE,         
+  delta = 0,                        
   imputation_params = VL_params_list,
   priors           = my_priors,
-  role_mixing_matrix = role_mixing_weights
-)
+  role_mixing_matrix = role_mixing_weights)
 ```
 
 ### Step 9: Fit the Bayesian Model
@@ -354,7 +359,26 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `test_daily` | `FALSE` | Switch to daily testing after first household detection. |
 | `perfect_detection` | `TRUE` | If `FALSE`, detection depends on viral load thresholds. |
 | `detect_threshold_log10` | `1e-6` | Min log10 VL for positive test. |
-| `detect_threshold_Ct` | `99` | Max Ct for positive test (set `35`-`40` for realistic PCR). |
+| `detect_threshold_Ct` | `40` | Max Ct for positive test (set `35`-`40` for realistic PCR). |
+
+### Data Preparation & Model Control
+| Parameter | Default | Description |
+|---|---|---|
+| `use_vl_data` | `TRUE` | Use actual viral load data vs. generation interval curve. |
+| `use_curve_logic` | `TRUE` | When `use_vl_data = FALSE`, estimate generation interval curve vs. constant infectivity. |
+| `delta` | `0` | Household size scaling. Force scaled by `(1/max(n_h,1))^delta`. |
+
+### Viral Load Parameters (when `vl_type = 1`)
+| Parameter | Default | Description |
+|---|---|---|
+| `V_ref` | `3.0` | Reference log10 VL for infectiousness scaling. |
+| `rho` | `2.5` | Power-law exponent for VL scaling: `(VL/V_ref)^rho`. |
+
+### Ct Parameters (when `vl_type = 0`)  
+| Parameter | Default | Description |
+|---|---|---|
+| `Ct50` | `35.0` | Ct value at 50% infectiousness. |
+| `slope_ct` | `2.0` | Steepness of Ct-infectiousness sigmoid. |
 
 ---
 
@@ -372,6 +396,8 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `plot_covariate_effects()` | Forest plot of intervention effects |
 | `plot_epidemic_curve()` | Epidemic curve overlaid with surveillance |
 | `plot_household_timeline()` | Per-household timeline with transmission arrows |
+| `prepare_stan_data()` | Format data for Stan with conditional parameter setup |
+
 
 ---
 
@@ -428,34 +454,36 @@ susceptibility = phi_role * exp(beta_susc * vacc_status)
 
 ---
 
-### Infectiousness Modes
+### Viral Component Scenarios
 
-The model supports two modes controlled by `use_vl_data`:
+The model supports **four scenarios** for modeling infectiousness, controlled by `use_vl_data` and `vl_type`:
 
-**Mode 1: Generation interval only** (`use_vl_data = 0`)
+**Scenario 1: Log10 Viral Load Data** (`use_vl_data = TRUE, vl_type = 1`)
+```r
+v_component = (max(0, VL) / V_ref)^rho
+```
+**Estimated parameters:** `V_ref`, `rho`
 
-When viral load data is unavailable, time-varying infectiousness is captured by a Gamma-shaped generation interval curve $g(t)$:
+**Scenario 2: Ct Value Data** (`use_vl_data = TRUE, vl_type = 0`)  
+```r
+v_component = 1 / (1 + exp((Ct - Ct50) / slope_ct))
+```
+**Estimated parameters:** `Ct50`, `slope_ct`
 
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot \mathbf{X}_{\text{susc},i}) \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot \exp(\boldsymbol{\beta}_{\text{inf}} \cdot \mathbf{X}_{\text{inf},j}) \cdot \left(\beta_1 + \beta_2 \cdot g(t - t_j^{\text{inf}})\right) \right)$$
+**Scenario 3: Generation Interval Curve** (`use_vl_data = FALSE, use_curve_logic = TRUE`)
+```r
+v_component = g_curve[days_since_infection]
+```
+Where `g_curve` is a normalized Gamma distribution.
+**Estimated parameters:** `gen_shape`, `gen_rate`
 
+**Scenario 4: Constant Infectiousness** (`use_vl_data = FALSE, use_curve_logic = FALSE`)
+```r
+v_component = 1.0  # No viral dynamics
+```
+**No additional parameters estimated.**
 
-**Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $\gamma_{\text{shape}}$, $\gamma_{\text{rate}}$
-
----
-
-**Mode 2: Viral load driven** (`use_vl_data = 1`)
-
-When viral load or Ct data is available, infectiousness is driven directly by the observed viral trajectory:
-
-$$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot \mathbf{X}_{\text{susc},i}) \cdot \left( \alpha_{\text{comm}} \cdot S(t) + (\frac{1}{\max(1,n_h)})^{\delta} \cdot \sum_{j \in h, j \ne i} C_{ij} \cdot \kappa_{r_j} \cdot \exp(\boldsymbol{\beta}_{\text{inf}} \cdot \mathbf{X}_{\text{inf},j}) \cdot \left(\beta_1 + \beta_2 \cdot f(V_j(t))\right) \right)$$
-
-where the dose-response function $f(\cdot)$ depends on the data type:
-
-- **Log10 viral load**: $\quad f(V) = \left(\frac{V}{V_{ref}}\right)^{\rho}$
-
-- **Ct values**: $\quad f(V) = \frac{1}{1 + \exp\left(\frac{Ct_{50}-V}{\sigma_{slope}}\right)}$
-
-**Estimated parameters:** $\beta_1$, $\beta_2$, $\alpha_{\text{comm}}$, $\phi_{r}$, $\kappa_{r}$, $V_{ref}$ or $Ct_{50}$, $\rho$ or $\sigma_{slope}$
+The final infectiousness is always: `beta1 + beta2 * v_component`
 
 ---
 
@@ -463,23 +491,36 @@ where the dose-response function $f(\cdot)$ depends on the data type:
 
 The Stan model jointly estimates a core set of parameters, plus optional parameters that activate based on the data you supply to `prepare_stan_data()`.
 
-### Always estimated
+## Estimated Parameters
+
+The Stan model uses **conditional parameter estimation** - different parameters are estimated based on your data configuration:
+
+### Always Estimated
 | Parameter | Description |
 |---|---|
-| $\beta_1$ | Baseline within-household transmission rate |
-| $\beta_2$ | Viral-load-dependent transmission rate |
-| $\alpha_{\text{comm}}$ | Community importation rate |
-| $\phi_{\text{role}}$ | Role-specific susceptibility multipliers (role 1 = reference = 1.0) |
-| $\kappa_{\text{role}}$ | Role-specific infectivity multipliers (role 1 = reference = 1.0) |
+| `beta1`, `beta2` | Baseline and viral-dependent transmission rates |
+| `alpha_comm` | Community importation rate |
+| `phi_role` | Role-specific susceptibility multipliers |
+| `kappa_role` | Role-specific infectivity multipliers |
 
-### Conditionally estimated
-| Parameter | Description | Activated when |
+### Conditionally Estimated
+| Parameter | Description | When Estimated |
 |---|---|---|
-| $C_{50}$, $s$ | Viral load dose-response curve | `use_vl_data = 1` |
-| $\gamma_{\text{shape}}, \gamma_{\text{rate}}$ | Gamma distribution for infectious period | `use_vl_data = 0` |
-| $\boldsymbol{\beta}_{\text{susc}}$ | **Log-linear coefficients** for susceptibility covariates | `covariates_susceptibility` is provided |
-| $\boldsymbol{\beta}_{\text{inf}}$ | **Log-linear coefficients** for infectivity covariates | `covariates_infectivity` is provided |
+| `V_ref`, `rho` | Log10 viral load scaling | `use_vl_data = TRUE` AND `vl_type = 1` |
+| `Ct50`, `slope_ct` | Ct value dose-response | `use_vl_data = TRUE` AND `vl_type = 0` |
+| `gen_shape`, `gen_rate` | Generation interval curve | `use_vl_data = FALSE` AND `use_curve_logic = TRUE` |
+| `beta_susc` | Susceptibility covariate effects | `covariates_susceptibility` provided |
+| `beta_inf` | Infectivity covariate effects | `covariates_infectivity` provided |
 
+### Flexible Prior Support
+All parameters support flexible priors (`"normal"`, `"uniform"`, `"lognormal"`):
+```r
+my_priors <- list(
+  phi_role   = list(dist = "normal", params = c(0, 0.5)),    # Tighter susceptibility prior
+  kappa_role = list(dist = "lognormal", params = c(0, 0.3)), # LogNormal infectivity prior
+  V_ref      = list(dist = "uniform", params = c(2, 4))      # Only estimated when vl_type=1
+)
+```
 
 ### Example
 ```r

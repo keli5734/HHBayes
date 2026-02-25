@@ -24,7 +24,7 @@ simulate_multiple_households_comm(
   verbose = FALSE,
   seasonal_forcing_list = NULL,
   detect_threshold_log10 = 1e-06,
-  detect_threshold_Ct = 99,
+  detect_threshold_Ct = 40,
   surveillance_interval = 1,
   test_daily = FALSE,
   viral_testing = "viral load",

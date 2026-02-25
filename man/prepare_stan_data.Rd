@@ -12,6 +12,7 @@ prepare_stan_data(
   study_end_date = as.Date("2025-07-01"),
   seasonal_forcing_list = NULL,
   use_vl_data = TRUE,
+  use_curve_logic = FALSE,
   covariates_susceptibility = NULL,
   covariates_infectivity = NULL,
   model_type = "empirical",
@@ -39,6 +40,10 @@ prepare_stan_data(
 
 \item{use_vl_data}{Logical. Whether to include viral load data. Defaults to TRUE.}
 
+\item{use_curve_logic}{Logical. Whether to use generation interval curve when viral load data is unavailable.
+When TRUE, estimates gen_shape and gen_rate parameters for gamma infectivity curve.
+When FALSE, uses constant infectivity (v_comp = 1.0). Defaults to TRUE.}
+
 \item{covariates_susceptibility}{Vector of column names to use as covariates for susceptibility.}
 
 \item{covariates_infectivity}{Vector of column names to use as covariates for infectivity.}
@@ -57,7 +62,16 @@ Should match the value used in simulation. Defaults to 0 (no scaling).}
 
 \item{imputation_params}{List of parameters for mechanistic viral curves (Cpeak, r, d, t_peak) by role.}
 
-\item{priors}{List of flexible priors (dist, params).}
+\item{priors}{List of flexible priors (dist, params). Supported priors include:
+\itemize{
+\item beta1, beta2, alpha: Transmission parameters
+\item phi_role, kappa_role: Role-specific susceptibility/infectivity effects
+\item V_ref, rho: Log10 viral load scaling parameters (when vl_type=1)
+\item ct50, slope: Ct value dose-response parameters (when vl_type=0)
+\item gen_shape, gen_rate: Generation interval parameters (when use_curve_logic=1)
+\item covariates: Covariate effect parameters
+}
+Each prior can specify: list(dist="normal|uniform|lognormal", params=c(param1, param2))}
 
 \item{seed}{Integer. Random seed for reproducibility. Defaults to 123.}
 }
