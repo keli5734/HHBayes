@@ -19,19 +19,6 @@
 #'   Should match the value used in simulation. Defaults to 0 (no scaling).
 #' @param role_mixing_matrix 4x4 Matrix defining contact weights between roles.
 #' @param seed Integer. Random seed for reproducibility. Defaults to 123.
-#' @param priors List of flexible priors (dist, params). Supported priors include:
-#'   \itemize{
-#'     \item beta1, beta2, alpha: Transmission parameters
-#'     \item phi_role, kappa_role: Role-specific susceptibility/infectivity effects
-#'     \item V_ref, rho: Log10 viral load scaling parameters (when vl_type=1)
-#'     \item ct50, slope: Ct value dose-response parameters (when vl_type=0)
-#'     \item gen_shape, gen_rate: Generation interval parameters (when use_curve_logic=1)
-#'     \item covariates: Covariate effect parameters
-#'   }
-#'   Each prior can specify: list(dist="normal|uniform|lognormal", params=c(param1, param2))
-#' @param use_curve_logic Logical. Whether to use generation interval curve when viral load data is unavailable.
-#'   When TRUE, estimates gen_shape and gen_rate parameters for gamma infectivity curve.
-#'   When FALSE, uses constant infectivity (v_comp = 1.0). Defaults to TRUE.
 #'
 #' @return A named list formatted for input to the Stan model.
 #' @export
@@ -42,7 +29,6 @@ prepare_stan_data <- function(df_clean,
                               study_end_date = as.Date("2025-07-01"),
                               seasonal_forcing_list = NULL,
                               use_vl_data = TRUE,
-                              use_curve_logic = FALSE,
 
                               # --- COVARIATE ARGUMENTS ---
                               covariates_susceptibility = NULL,
@@ -86,17 +72,10 @@ prepare_stan_data <- function(df_clean,
   p_beta2 <- parse_prior(priors$beta2, 1, c(-5, 1))
   p_alpha <- parse_prior(priors$alpha, 1, c(-6, 2))
   p_cov   <- parse_prior(priors$covariates, 1, c(0, 1))
-
   p_shape <- parse_prior(priors$gen_shape, 3, c(log(3.0), 0.2))
   p_rate  <- parse_prior(priors$gen_rate,  3, c(log(0.5), 0.2))
-
-
-  p_phi   <- parse_prior(priors$phi_role, 1, c(0, 1))    # NEW: Role susceptibility priors
-  p_kappa <- parse_prior(priors$kappa_role, 1, c(0, 1))  # NEW: Role infectivity priors
-  p_vref  <- parse_prior(priors$V_ref, 1, c(3.0, 1.0))   # NEW: VL reference priors
-  p_rho   <- parse_prior(priors$rho, 1, c(2.5, 0.5))     # NEW: VL exponent priors
-  p_ct50  <- parse_prior(priors$ct50, 1, c(35.0, 3.0))
-  p_slope <- parse_prior(priors$slope, 1, c(1.5, 1.0))
+  p_ct50  <- parse_prior(priors$ct50,      1, c(35.0, 3.0))
+  p_slope <- parse_prior(priors$slope,     1, c(1.5, 1.0))
 
   # =========================================================
   # 2. STANDARDIZE COLUMN NAMES
@@ -532,7 +511,7 @@ prepare_stan_data <- function(df_clean,
     use_vl_data = as.integer(use_vl_data),
 
     vl_type = as.integer(detected_vl_type),
-    use_curve_logic = as.integer(use_curve_logic),
+    use_curve_logic = 1L,
 
     K_susc = K_susc, X_susc = X_susc,
     K_inf  = K_inf,  X_inf  = X_inf,
@@ -545,11 +524,6 @@ prepare_stan_data <- function(df_clean,
     prior_shape_type = p_shape$type, prior_shape_params = p_shape$params,
     prior_rate_type  = p_rate$type,  prior_rate_params  = p_rate$params,
     prior_ct50_type  = p_ct50$type,  prior_ct50_params  = p_ct50$params,
-    prior_slope_type = p_slope$type, prior_slope_params = p_slope$params,
-
-    prior_phi_type   = p_phi$type,   prior_phi_params   = p_phi$params,
-    prior_kappa_type = p_kappa$type, prior_kappa_params = p_kappa$params,
-    prior_vref_type  = p_vref$type,  prior_vref_params  = p_vref$params,
-    prior_rho_type   = p_rho$type,   prior_rho_params   = p_rho$params
+    prior_slope_type = p_slope$type, prior_slope_params = p_slope$params
   )
 }

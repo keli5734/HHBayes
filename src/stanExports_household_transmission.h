@@ -1173,7 +1173,7 @@ public:
         }
         current_statement__ = 29;
         stan::model::assign(g_curve_est,
-          stan::math::divide(raw_curve, stan::math::max(raw_curve)),
+          stan::math::divide(raw_curve, stan::math::sum(raw_curve)),
           "assigning variable g_curve_est");
       }
       Eigen::Matrix<local_scalar_t__,-1,-1> V_term_calc =
@@ -1811,7 +1811,7 @@ public:
         }
         current_statement__ = 29;
         stan::model::assign(g_curve_est,
-          stan::math::divide(raw_curve, stan::math::max(raw_curve)),
+          stan::math::divide(raw_curve, stan::math::sum(raw_curve)),
           "assigning variable g_curve_est");
       }
       current_statement__ = 18;

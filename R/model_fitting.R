@@ -20,46 +20,49 @@ fit_household_model <- function(stan_data,
                                 init_fun = NULL,
                                 ...) {
 
+  # 1. Define Default Initial Values
+  # These defaults are crucial for convergence in transmission models to prevent
+  # the sampler from starting in a region with 0 likelihood.
   if (is.null(init_fun)) {
     init_fun <- function() {
+      # Get dimensions from stan_data
       R <- stan_data$R
       K_susc <- stan_data$K_susc
       K_inf <- stan_data$K_inf
 
       init_list <- list(
-        # Always needed
-        log_beta1 = log(0.008),
-        log_beta2 = log(0.008),
-        log_alpha_comm = log(5e-4),
-        log_phi_by_role_raw = rep(0.1, max(1, R - 1)),
-        log_kappa_by_role_raw = rep(0.1, max(1, R - 1))
+        # Core transmission parameters (log scale for rates)
+        log_beta1 = log(0.008),           # ~8e-3 baseline transmission
+        log_beta2 = log(0.008),           # ~8e-3 VL-dependent transmission
+        log_alpha_comm = log(5e-4),       # ~5e-4 community rate (CRITICAL!)
+
+        # Role-specific effects (R-1 parameters, relative to reference)
+        # Start at reference level (0 on log scale = 1.0 on natural scale)
+        log_phi_by_role_raw = rep(0.1, max(1, R - 1)),     # Small positive to avoid exact 0
+        log_kappa_by_role_raw = rep(0.1, max(1, R - 1)),   # Small positive to avoid exact 0
+
+        # Viral dynamics parameters (must respect Stan bounds)
+        gen_shape = 3.0,                  # Within bounds [1.0, 20.0]
+        gen_rate = 1.0,                   # Within bounds [0.1, 5.0]
+        Ct50 = 35.0,                      # Reasonable Ct threshold
+        slope_ct = 2.0                    # Moderate slope for sigmoid
       )
 
-      # Add covariate effects if present
-      if (K_susc > 0) init_list$beta_susc <- rep(0.0, K_susc)
-      if (K_inf > 0) init_list$beta_inf <- rep(0.0, K_inf)
-
-      # CONDITIONAL INITIALIZATION
-      if (stan_data$use_curve_logic == 1) {
-        init_list$gen_shape_raw <- array(3.0, dim = 1)
-        init_list$gen_rate_raw <- array(1.0, dim = 1)
+      # Conditional covariate effects (only add if covariates are present)
+      if (K_susc > 0) {
+        init_list$beta_susc <- rep(0.0, K_susc)  # Start at no effect
       }
-
-      if (stan_data$use_vl_data == 1 && stan_data$vl_type == 0) {
-        init_list$Ct50_raw <- array(35.0, dim = 1)
-        init_list$slope_ct_raw <- array(2.0, dim = 1)
-      }
-
-      if (stan_data$use_vl_data == 1 && stan_data$vl_type == 1) {
-        init_list$V_ref_raw <- array(3.0, dim = 1)
-        init_list$rho_raw <- array(2.5, dim = 1)
+      if (K_inf > 0) {
+        init_list$beta_inf <- rep(0.0, K_inf)    # Start at no effect
       }
 
       return(init_list)
     }
   }
 
-  # Run sampler
+  # 2. Run Sampler
+  # NOTE: We use 'stanmodels$household_transmission' which is the pre-compiled object
+  # created by the package. We do NOT refer to the .stan file path directly.
   out <- rstan::sampling(
     object = stanmodels$household_transmission,
     data = stan_data,
@@ -68,6 +71,8 @@ fit_household_model <- function(stan_data,
     warmup = warmup,
     init = init_fun,
     control = list(adapt_delta = 0.95, max_treedepth = 15),
+    # We default to including all parameters.
+    # Users can filter the output object later if needed.
     ...
   )
 
