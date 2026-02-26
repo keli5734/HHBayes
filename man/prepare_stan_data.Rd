@@ -12,6 +12,7 @@ prepare_stan_data(
   study_end_date = as.Date("2025-07-01"),
   seasonal_forcing_list = NULL,
   use_vl_data = TRUE,
+  use_curve_logic = FALSE,
   covariates_susceptibility = NULL,
   covariates_infectivity = NULL,
   model_type = "empirical",

@@ -239,18 +239,13 @@ df_for_stan <- sim_res$diagnostic_df %>%
 
 ```r
 my_priors <- list(
-  beta1     = list(dist = "normal",    params = c(-5, 1)),    # log-transmission rate 1
-  beta2     = list(dist = "normal",    params = c(-5, 1)),    # log-transmission rate 2
-  alpha     = list(dist = "normal",    params = c(-4, 1)),    # log-community rate
-  phi_role  = list(dist = "normal",    params = c(0, 1)),     # NEW: Role susceptibility effects
-  kappa_role= list(dist = "lognormal", params = c(0, 0.3)),   # NEW: Role infectivity effects
-  V_ref     = list(dist = "uniform",   params = c(2, 4)),     # NEW: Log10 VL reference
-  rho       = list(dist = "normal",    params = c(2.5, 0.5)), # NEW: Log10 VL exponent
-  covariates = list(dist = "normal",   params = c(0, 2)),     # covariate coefficients
-  gen_shape = list(dist = "lognormal", params = c(1.5, 0.5)), # generation interval shape
-  gen_rate  = list(dist = "lognormal", params = c(0.0, 0.5)), # generation interval rate
-  ct50      = list(dist = "normal",    params = c(35, 2)),    # Ct reference point
-  slope     = list(dist = "lognormal", params = c(0.4, 0.5))  # Ct dose-response slope
+  beta1      = list(dist = "normal",  params = c(-5, 1)),
+  beta2      = list(dist = "normal",  params = c(-5, 1)),
+  alpha      = list(dist = "normal",  params = c(-7, 1)),
+  phi_role   = list(dist = "normal",  params = c(0, 1)),
+  kappa_role = list(dist = "normal",  params = c(0, 1)),
+  vl_midpoint = list(dist = "normal", params = c(4, 1.0)),  # adjust if Ct values
+  vl_slope    = list(dist = "normal", params = c(1.0,  0.5))   # adjust if Ct values
 )
 ```
 
@@ -290,13 +285,20 @@ options(mc.cores = parallel::detectCores())
 
 fit <- fit_household_model(
   stan_input,
-  pars    = c("log_phi_by_role_raw", "log_kappa_by_role_raw",
-              "log_beta1", "log_beta2", "log_alpha_comm",
-              "g_curve_est", "V_term_calc"),
-  include = FALSE,       # Exclude these parameters from output
+  pars = c("log_phi_by_role_raw",
+           "log_kappa_by_role_raw",
+           "log_beta1",
+           "log_beta2",
+           "log_alpha_comm",
+           "g_curve_est",
+           "V_term_calc"),
+  include = FALSE,
   iter    = 2000,
   warmup  = 1000,
-  chains  = 4
+  chains  = 4,
+  seed    = 123,
+  init_fun = NULL,
+  core    = 4
 )
 
 print(fit, probs = c(0.025, 0.5, 0.975))
@@ -346,10 +348,9 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 |---|---|---|
 | `viral_testing` | `"viral load"` | `"viral load"` (log10 scale) or `"Ct"` (cycle threshold). |
 | `model_type` | `"empirical"` | `"empirical"` (parametric curves) or `"ODE"` (within-host ODE). |
-| `V_ref` | `3.0` | Reference log10 VL for infectiousness scaling. |
-| `V_rho` | `2.5` | Power-law exponent for VL scaling. |
-| `Ct_50` | `40` | Ct at 50% infectiousness (sigmoid). |
-| `Ct_delta` | `2` | Steepness of Ct-infectiousness sigmoid. |
+| `vl_midpoint` | `3.0 or 40` | Reference log10 VL for infectiousness scaling or Ct at 50% infectiousness (sigmoid) |
+| `vl_slope` | `2.5 or 2` | Power-law exponent for log10 VL scaling. or Steepness of Ct-infectiousness sigmoid. |
+
 
 ### Testing and Surveillance
 
@@ -371,14 +372,14 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 ### Viral Load Parameters (when `vl_type = 1`)
 | Parameter | Default | Description |
 |---|---|---|
-| `V_ref` | `3.0` | Reference log10 VL for infectiousness scaling. |
-| `rho` | `2.5` | Power-law exponent for VL scaling: `(VL/V_ref)^rho`. |
+| `vl_midpoint` | `3.0` | Reference log10 VL for infectiousness scaling. |
+| `vl_slope` | `2.5` | Power-law exponent for VL scaling: `(VL/vl_midpoint)^vl_slope`. |
 
 ### Ct Parameters (when `vl_type = 0`)  
 | Parameter | Default | Description |
 |---|---|---|
-| `Ct50` | `35.0` | Ct value at 50% infectiousness. |
-| `slope_ct` | `2.0` | Steepness of Ct-infectiousness sigmoid. |
+| `vl_midpoint` | `35.0` | Ct value at 50% infectiousness. |
+| `vl_slope` | `2.0` | Steepness of Ct-infectiousness sigmoid. |
 
 ---
 
@@ -460,15 +461,15 @@ The model supports **four scenarios** for modeling infectiousness, controlled by
 
 **Scenario 1: Log10 Viral Load Data** (`use_vl_data = TRUE, vl_type = 1`)
 ```r
-v_component = (max(0, VL) / V_ref)^rho
+v_component = (max(0, VL) / vl_midpoint)^vl_slope
 ```
-**Estimated parameters:** `V_ref`, `rho`
+**Estimated parameters:** `vl_midpoint`, `vl_slope`
 
 **Scenario 2: Ct Value Data** (`use_vl_data = TRUE, vl_type = 0`)  
 ```r
-v_component = 1 / (1 + exp((Ct - Ct50) / slope_ct))
+v_component = 1 / (1 + exp((vl_midpoint-Ct) / vl_slope))
 ```
-**Estimated parameters:** `Ct50`, `slope_ct`
+**Estimated parameters:** `vl_midpoint`, `vl_slope`
 
 **Scenario 3: Generation Interval Curve** (`use_vl_data = FALSE, use_curve_logic = TRUE`)
 ```r
@@ -502,12 +503,11 @@ The Stan model uses **conditional parameter estimation** - different parameters 
 | `alpha_comm` | Community importation rate |
 | `phi_role` | Role-specific susceptibility multipliers |
 | `kappa_role` | Role-specific infectivity multipliers |
+| `vl_midpoint`, `vl_slope` | Log10 viral load scaling  or Ct value scaling| `use_vl_data = TRUE`|
 
 ### Conditionally Estimated
 | Parameter | Description | When Estimated |
 |---|---|---|
-| `V_ref`, `rho` | Log10 viral load scaling | `use_vl_data = TRUE` AND `vl_type = 1` |
-| `Ct50`, `slope_ct` | Ct value dose-response | `use_vl_data = TRUE` AND `vl_type = 0` |
 | `gen_shape`, `gen_rate` | Generation interval curve | `use_vl_data = FALSE` AND `use_curve_logic = TRUE` |
 | `beta_susc` | Susceptibility covariate effects | `covariates_susceptibility` provided |
 | `beta_inf` | Infectivity covariate effects | `covariates_infectivity` provided |
@@ -518,7 +518,6 @@ All parameters support flexible priors (`"normal"`, `"uniform"`, `"lognormal"`):
 my_priors <- list(
   phi_role   = list(dist = "normal", params = c(0, 0.5)),    # Tighter susceptibility prior
   kappa_role = list(dist = "lognormal", params = c(0, 0.3)), # LogNormal infectivity prior
-  V_ref      = list(dist = "uniform", params = c(2, 4))      # Only estimated when vl_type=1
 )
 ```
 

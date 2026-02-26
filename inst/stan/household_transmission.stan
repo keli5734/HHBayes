@@ -52,8 +52,8 @@ data {
   // Viral Dynamics Priors
   int<lower=0> prior_shape_type; vector[2] prior_shape_params;
   int<lower=0> prior_rate_type;  vector[2] prior_rate_params;
-  int<lower=0> prior_ct50_type;  vector[2] prior_ct50_params;
-  int<lower=0> prior_slope_type; vector[2] prior_slope_params;
+  int<lower=0> prior_vl_midpoint_type; vector[2] prior_vl_midpoint_params;
+  int<lower=0> prior_vl_slope_type; vector[2] prior_vl_slope_params;
 }
 
 transformed data {
@@ -84,8 +84,9 @@ parameters {
   // Viral Dynamics (For imputation fallback)
   real<lower=1.0, upper=20.0> gen_shape;
   real<lower=0.1, upper=5.0> gen_rate;
-  real<lower=0> Ct50;
-  real<lower=0> slope_ct;
+
+  real<lower=0> vl_midpoint;
+  real<lower=0> vl_slope;
 
   // Covariate Effects
   vector[K_susc] beta_susc;
@@ -125,8 +126,8 @@ transformed parameters {
         if (Y[n, t] == 1) {
            real val = V[n, t];
            // Apply saturation logic (Ct vs Log10)
-           if (vl_type == 1) V_term_calc[n, t] = pow(fmax(0.0, val) / Ct50, slope_ct);
-           else V_term_calc[n, t] = inv_logit( (Ct50 - val) / slope_ct );
+           if (vl_type == 1) V_term_calc[n, t] = pow(fmax(0.0, val) / vl_midpoint, vl_slope);
+           else  V_term_calc[n, t] = inv_logit( (vl_midpoint - val) / vl_slope );
         }
       }
     }
@@ -169,13 +170,13 @@ model {
   else if (prior_rate_type == 2) gen_rate ~ uniform(prior_rate_params[1], prior_rate_params[2]);
   else if (prior_rate_type == 3) gen_rate ~ lognormal(prior_rate_params[1], prior_rate_params[2]);
 
-  if (prior_ct50_type == 1) Ct50 ~ normal(prior_ct50_params[1], prior_ct50_params[2]);
-  else if (prior_ct50_type == 2) Ct50 ~ uniform(prior_ct50_params[1], prior_ct50_params[2]);
-  else if (prior_ct50_type == 3) Ct50 ~ lognormal(prior_ct50_params[1], prior_ct50_params[2]);
+  if (prior_vl_midpoint_type == 1)      vl_midpoint ~ normal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+  else if (prior_vl_midpoint_type == 2) vl_midpoint ~ uniform(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+  else if (prior_vl_midpoint_type == 3) vl_midpoint ~ lognormal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
 
-  if (prior_slope_type == 1) slope_ct ~ normal(prior_slope_params[1], prior_slope_params[2]);
-  else if (prior_slope_type == 2) slope_ct ~ uniform(prior_slope_params[1], prior_slope_params[2]);
-  else if (prior_slope_type == 3) slope_ct ~ lognormal(prior_slope_params[1], prior_slope_params[2]);
+  if (prior_vl_slope_type == 1)         vl_slope ~ normal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+  else if (prior_vl_slope_type == 2)    vl_slope ~ uniform(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+  else if (prior_vl_slope_type == 3)    vl_slope ~ lognormal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
 
   // =========================================================
   // 2. OPTIMIZED LIKELIHOOD (Vectorized Time Loop)

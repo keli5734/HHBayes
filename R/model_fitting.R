@@ -30,6 +30,10 @@ fit_household_model <- function(stan_data,
       K_susc <- stan_data$K_susc
       K_inf <- stan_data$K_inf
 
+      vl_midpoint_init <- if (stan_data$vl_type == 0) 33.0 else 6.0
+      vl_slope_init    <- if (stan_data$vl_type == 0) 4.0  else 1.0
+
+
       init_list <- list(
         # Core transmission parameters (log scale for rates)
         log_beta1 = log(0.008),           # ~8e-3 baseline transmission
@@ -44,8 +48,9 @@ fit_household_model <- function(stan_data,
         # Viral dynamics parameters (must respect Stan bounds)
         gen_shape = 3.0,                  # Within bounds [1.0, 20.0]
         gen_rate = 1.0,                   # Within bounds [0.1, 5.0]
-        Ct50 = 35.0,                      # Reasonable Ct threshold
-        slope_ct = 2.0                    # Moderate slope for sigmoid
+
+        vl_midpoint = vl_midpoint_init,   # RENAMED + data-aware
+        vl_slope    = vl_slope_init       # RENAMED + data-aware
       )
 
       # Conditional covariate effects (only add if covariates are present)

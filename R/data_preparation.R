@@ -29,7 +29,7 @@ prepare_stan_data <- function(df_clean,
                               study_end_date = as.Date("2025-07-01"),
                               seasonal_forcing_list = NULL,
                               use_vl_data = TRUE,
-
+                              use_curve_logic = FALSE,
                               # --- COVARIATE ARGUMENTS ---
                               covariates_susceptibility = NULL,
                               covariates_infectivity = NULL,
@@ -50,6 +50,11 @@ prepare_stan_data <- function(df_clean,
   if(!is.null(seed)) set.seed(seed)
   T_max <- as.integer(study_end_date - study_start_date) + 1
   if (T_max <= 0) stop("study_end_date must be after study_start_date")
+
+  max_obs_val <- max(df_clean$pcr_sample, na.rm=TRUE)
+  is_ct_data <- (is.finite(max_obs_val) && max_obs_val > 15)
+  detected_vl_type <- if(is_ct_data) 0 else 1
+  default_val <- if(is_ct_data) 45.0 else 0.0
 
   # =========================================================
   # 1. PARSE FLEXIBLE PRIORS
@@ -74,8 +79,26 @@ prepare_stan_data <- function(df_clean,
   p_cov   <- parse_prior(priors$covariates, 1, c(0, 1))
   p_shape <- parse_prior(priors$gen_shape, 3, c(log(3.0), 0.2))
   p_rate  <- parse_prior(priors$gen_rate,  3, c(log(0.5), 0.2))
-  p_ct50  <- parse_prior(priors$ct50,      1, c(35.0, 3.0))
-  p_slope <- parse_prior(priors$slope,     1, c(1.5, 1.0))
+
+  default_vl_midpoint_prior <- if (detected_vl_type == 0) {
+    list(dist = "normal", params = c(33.0, 2.0))   # Ct scale
+  } else {
+    list(dist = "normal", params = c(4.0,  1.0))   # Log10 VL scale
+  }
+
+  default_vl_slope_prior <- if (detected_vl_type == 0) {
+    list(dist = "normal",    params = c(4.0,  2.0))       # Logistic steepness
+  } else {
+    list(dist = "lognormal", params = c(log(1.0), 0.5))   # Hill exponent
+  }
+
+  p_vl_midpoint <- parse_prior(priors$vl_midpoint,
+                               default_vl_midpoint_prior$type,
+                               default_vl_midpoint_prior$params)
+  p_vl_slope    <- parse_prior(priors$vl_slope,
+                               default_vl_slope_prior$type,
+                               default_vl_slope_prior$params)
+
 
   # =========================================================
   # 2. STANDARDIZE COLUMN NAMES
@@ -289,11 +312,6 @@ prepare_stan_data <- function(df_clean,
     K_inf <- 0
   }
 
-  # --- DATA MATRICES (I, Y, V) ---
-  max_obs_val <- max(df_clean$ct_value, na.rm=TRUE)
-  is_ct_data <- (is.finite(max_obs_val) && max_obs_val > 15)
-  detected_vl_type <- if(is_ct_data) 0 else 1
-  default_val <- if(is_ct_data) 45.0 else 0.0
 
   I <- matrix(0L, N, T_max)
   Y <- matrix(0L, N, T_max)
@@ -511,7 +529,7 @@ prepare_stan_data <- function(df_clean,
     use_vl_data = as.integer(use_vl_data),
 
     vl_type = as.integer(detected_vl_type),
-    use_curve_logic = 1L,
+    use_curve_logic = as.integer(use_curve_logic),
 
     K_susc = K_susc, X_susc = X_susc,
     K_inf  = K_inf,  X_inf  = X_inf,
@@ -523,7 +541,8 @@ prepare_stan_data <- function(df_clean,
 
     prior_shape_type = p_shape$type, prior_shape_params = p_shape$params,
     prior_rate_type  = p_rate$type,  prior_rate_params  = p_rate$params,
-    prior_ct50_type  = p_ct50$type,  prior_ct50_params  = p_ct50$params,
-    prior_slope_type = p_slope$type, prior_slope_params = p_slope$params
+    prior_vl_midpoint_type   = p_vl_midpoint$type,   prior_vl_midpoint_params = p_vl_midpoint$params,
+    prior_vl_slope_type      = p_vl_slope$type,       prior_vl_slope_params    = p_vl_slope$params
+
   )
 }
