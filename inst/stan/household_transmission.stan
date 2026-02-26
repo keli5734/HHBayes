@@ -127,7 +127,7 @@ transformed parameters {
            real val = V[n, t];
            // Apply saturation logic (Ct vs Log10)
            if (vl_type == 1) V_term_calc[n, t] = pow(fmax(0.0, val) / vl_midpoint, vl_slope);
-           else  V_term_calc[n, t] = inv_logit( (vl_midpoint - val) / vl_slope );
+           else  V_term_calc[n, t] = inv_logit( (vl_midpoint - fmin(val, 45.0)) / vl_slope );
         }
       }
     }
