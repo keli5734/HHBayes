@@ -7,6 +7,9 @@
 #' @param study_end_date Date. End date of the study period. Defaults to 2025-07-01.
 #' @param seasonal_forcing_list List of numeric vectors (one per role) for seasonal forcing. NULL for no forcing.
 #' @param use_vl_data Logical. Whether to include viral load data. Defaults to TRUE.
+#' @param use_curve_logic Logical. Whether to use the Gamma generation interval curve
+#'   as a fallback for infectiousness when \code{use_vl_data = FALSE}.
+#'   When \code{use_vl_data = TRUE} this argument is ignored. Defaults to FALSE.
 #' @param covariates_susceptibility Vector of column names to use as covariates for susceptibility.
 #' @param covariates_infectivity Vector of column names to use as covariates for infectivity.
 #' @param priors List of flexible priors (dist, params).
