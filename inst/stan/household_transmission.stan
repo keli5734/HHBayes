@@ -54,6 +54,9 @@ data {
   int<lower=0> prior_rate_type;  vector[2] prior_rate_params;
   int<lower=0> prior_vl_midpoint_type; vector[2] prior_vl_midpoint_params;
   int<lower=0> prior_vl_slope_type; vector[2] prior_vl_slope_params;
+
+  int<lower=0> prior_phi_role_type;   vector[2] prior_phi_role_params;
+  int<lower=0> prior_kappa_role_type; vector[2] prior_kappa_role_params;
 }
 
 transformed data {
@@ -138,8 +141,14 @@ model {
   // =========================================================
   // 1. PRIORS
   // =========================================================
-  log_phi_by_role_raw   ~ normal(0, 1);
-  log_kappa_by_role_raw ~ normal(0, 1);
+
+  if (prior_phi_role_type == 1)      log_phi_by_role_raw ~ normal(prior_phi_role_params[1], prior_phi_role_params[2]);
+  else if (prior_phi_role_type == 2) log_phi_by_role_raw ~ uniform(prior_phi_role_params[1], prior_phi_role_params[2]);
+  else if (prior_phi_role_type == 3) log_phi_by_role_raw ~ lognormal(prior_phi_role_params[1], prior_phi_role_params[2]);
+
+  if (prior_kappa_role_type == 1)      log_kappa_by_role_raw ~ normal(prior_kappa_role_params[1], prior_kappa_role_params[2]);
+  else if (prior_kappa_role_type == 2) log_kappa_by_role_raw ~ uniform(prior_kappa_role_params[1], prior_kappa_role_params[2]);
+  else if (prior_kappa_role_type == 3) log_kappa_by_role_raw ~ lognormal(prior_kappa_role_params[1], prior_kappa_role_params[2]);
 
   // Transmission Priors
   if (prior_beta1_type == 1) log_beta1 ~ normal(prior_beta1_params[1], prior_beta1_params[2]);

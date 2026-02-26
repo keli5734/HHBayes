@@ -133,8 +133,8 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
 
   p_gen_shape <- median(post$gen_shape)
   p_gen_rate  <- median(post$gen_rate)
-  p_ct50      <- median(post$Ct50)
-  p_slope     <- median(post$slope_ct)
+  p_vl_midpoint <- median(post$vl_midpoint)
+  p_vl_slope    <- median(post$vl_slope)
 
   p_phi   <- apply(post$phi_by_role,   2, median)
   p_kappa <- apply(post$kappa_by_role, 2, median)
@@ -157,16 +157,14 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
 
   infection_day <- rep(0, N)
   for(n in 1:N) {
-    idx <- which(I[n, ] == 1)
-    if(length(idx) > 0) infection_day[n] <- idx[1]
+    idx <- which(I[n, stan_data$start_risk[n]:T_max] == 1)
+    if(length(idx) > 0) infection_day[n] <- idx[1] + stan_data$start_risk[n] - 1
   }
 
   # Pre-calculate Gamma Curve
   g_curve <- numeric(T_max)
-  for(d in 1:T_max) {
-    g_curve[d] <- stats::dgamma(d, shape = p_gen_shape, rate = p_gen_rate)
-  }
-  g_curve <- g_curve / max(g_curve)
+  for(d in 1:T_max) g_curve[d] <- stats::dgamma(d, shape = p_gen_shape, rate = p_gen_rate)
+  g_curve <- g_curve / sum(g_curve)
 
   # 3. Iterate through Infections
   results_list <- list()
@@ -211,26 +209,27 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
 
       val_g <- g_curve[dt]
       val_v <- 0
-      if(stan_data$use_vl_data == 1) {
+      if (stan_data$use_vl_data == 1) {
         raw_v <- V[source_idx, t_inf]
         if (stan_data$vl_type == 1) {
-          # Power Function logic (from your update)
-          # Note: using median p_ct50/slope
-          val_v <- (max(0, raw_v) / p_ct50)^p_slope
+          val_v <- (max(0, raw_v) / p_vl_midpoint)^p_vl_slope
         } else {
-          exponent <- -(raw_v - p_ct50) * p_slope
-          val_v <- 1 / (1 + exp(-exponent))
+          val_v <- 1 / (1 + exp(-(p_vl_midpoint - min(raw_v, 45.0)) / p_vl_slope))  # FIX: add cap
         }
       }
 
       term_combined <- 0
-      if(stan_data$use_vl_data == 0) {
-        term_combined <- p_beta1 + (p_beta2 * val_g)
+      if (stan_data$use_vl_data == 0) {
+        if (stan_data$use_curve_logic == 1) {
+          term_combined <- p_beta1 + p_beta2 * val_g
+        } else {
+          term_combined <- p_beta1 + p_beta2 * 1.0
+        }
       } else {
-        term_combined <- p_beta1 + (p_beta2 * val_v)
+        term_combined <- p_beta1 + p_beta2 * val_v
       }
 
-      # --- NEW: Calculate Source Infectivity (Kappa * Covariates) ---
+      # --- Calculate Source Infectivity (Kappa * Covariates) ---
       log_inf_mod <- 0
       if(length(p_beta_inf) > 0) {
         log_inf_mod <- sum(X_inf[source_idx, ] * p_beta_inf)
@@ -238,7 +237,20 @@ reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold =
       kappa_eff <- p_kappa[stan_data$role_id[source_idx]] * exp(log_inf_mod)
 
       scaling <- (1 / max(stan_data$hh_size_people[hh], 1))^stan_data$delta
-      h_source <- scaling * kappa_eff * term_combined
+
+       #h_source <- scaling * kappa_eff * term_combined
+
+      get_contact_weight <- function(src_idx, tgt_idx, stan_data) {
+        match_k <- which(stan_data$contact_src == src_idx &
+                           stan_data$contact_tgt == tgt_idx)
+        if(length(match_k) == 0) return(0.0)
+        return(stan_data$contact_w[match_k[1]])
+      }
+
+      # Then inside the source loop, replace h_source with:
+      cw <- get_contact_weight(source_idx, target_idx, stan_data)
+      if(cw == 0) next   # no contact edge exists
+      h_source <- cw * scaling * kappa_eff * term_combined
 
       # Final Hazard for this link
       lambda_source <- phi_eff * h_source
@@ -480,7 +492,7 @@ plot_household_timeline <- function(trans_df, stan_data, target_hh_id,
     # Layer 1: Background Box
     geom_label(data = all_edges,
                aes(x = lbl_x, y = lbl_y,
-                   label = scales::percent(prob, accuracy = 1),
+                   label = scales::percent(prob, accuracy = .1),
                    alpha = alpha_val),
                color = NA,
                fill = "white",
@@ -490,7 +502,7 @@ plot_household_timeline <- function(trans_df, stan_data, target_hh_id,
     # Layer 2: Text
     geom_text(data = all_edges,
               aes(x = lbl_x, y = lbl_y,
-                  label = scales::percent(prob, accuracy = 1),
+                  label = scales::percent(prob, accuracy = .1),
                   color = source_role,
                   alpha = alpha_val),
               size = 7.5) +

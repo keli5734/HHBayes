@@ -82,6 +82,8 @@ prepare_stan_data <- function(df_clean,
   p_cov   <- parse_prior(priors$covariates, 1, c(0, 1))
   p_shape <- parse_prior(priors$gen_shape, 3, c(log(3.0), 0.2))
   p_rate  <- parse_prior(priors$gen_rate,  3, c(log(0.5), 0.2))
+  p_phi_role   <- parse_prior(priors$phi_role,   1, c(0, 1))
+  p_kappa_role <- parse_prior(priors$kappa_role, 1, c(0, 1))
 
   default_vl_midpoint_prior <- if (detected_vl_type == 0) {
     list(dist = "normal", params = c(33.0, 2.0))   # Ct scale
@@ -545,7 +547,9 @@ prepare_stan_data <- function(df_clean,
     prior_shape_type = p_shape$type, prior_shape_params = p_shape$params,
     prior_rate_type  = p_rate$type,  prior_rate_params  = p_rate$params,
     prior_vl_midpoint_type   = p_vl_midpoint$type,   prior_vl_midpoint_params = p_vl_midpoint$params,
-    prior_vl_slope_type      = p_vl_slope$type,       prior_vl_slope_params    = p_vl_slope$params
+    prior_vl_slope_type      = p_vl_slope$type,       prior_vl_slope_params    = p_vl_slope$params,
+    prior_phi_role_type     = p_phi_role$type,   prior_phi_role_params   = p_phi_role$params,
+    prior_kappa_role_type   = p_kappa_role$type, prior_kappa_role_params = p_kappa_role$params
 
   )
 }
