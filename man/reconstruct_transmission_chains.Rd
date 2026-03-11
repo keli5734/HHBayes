@@ -2,18 +2,35 @@
 % Please edit documentation in R/plotting_functions.R
 \name{reconstruct_transmission_chains}
 \alias{reconstruct_transmission_chains}
-\title{Reconstruct Transmission Chains (ALL LINKS)}
+\title{Reconstruct Transmission Chains}
 \usage{
-reconstruct_transmission_chains(fit, stan_data, min_prob_threshold = 0.01)
+reconstruct_transmission_chains(
+  fit = NULL,
+  stan_data,
+  sim_params = NULL,
+  min_prob_threshold = 0.01
+)
 }
 \arguments{
-\item{fit}{A stanfit object.}
+\item{fit}{A \code{stanfit} object from \code{rstan}. Required unless
+\code{sim_params} is provided.}
 
-\item{stan_data}{The list data passed to Stan.}
+\item{stan_data}{The list of data passed to Stan (or used in simulation).}
 
-\item{min_prob_threshold}{Ignore links with probability below this (default 0.01).
-Reconstruct Transmission Chains (Covariate-Aware)}
+\item{sim_params}{A named list of ground-truth parameters for simulation mode.
+Required fields: \code{beta1}, \code{beta2}, \code{alpha_comm},
+\code{gen_shape}, \code{gen_rate}, \code{phi}, \code{kappa}.
+Optional: \code{vl_midpoint}, \code{vl_slope}, \code{beta_susc}, \code{beta_inf}.}
+
+\item{min_prob_threshold}{Minimum probability to retain a transmission link.
+Default \code{0.01}.}
+}
+\value{
+A data frame with columns: \code{target}, \code{hh_id}, \code{day},
+\code{source}, \code{prob}.
 }
 \description{
-Saves ALL potential infectors for each episode, not just the most likely one.
+Saves ALL potential infectors for each infection episode.
+Works in two modes: estimation mode (supply a \code{fit} object) or
+simulation mode (supply a \code{sim_params} list of known ground-truth values).
 }

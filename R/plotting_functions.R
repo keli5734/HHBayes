@@ -114,35 +114,90 @@ plot_covariate_effects <- function(fit, stan_data) {
 
 
 
-#' Reconstruct Transmission Chains (ALL LINKS)
+# Internal NULL-coalescing operator
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+# Internal helper — never exported, no .Rd generated
+#' @noRd
+.extract_params <- function(fit = NULL, sim_params = NULL) {
+
+  if (!is.null(fit)) {
+    post <- rstan::extract(fit)
+    list(
+      beta1       = median(post$beta1),
+      beta2       = median(post$beta2),
+      alpha_comm  = median(post$alpha_comm),
+      gen_shape   = median(post$gen_shape),
+      gen_rate    = median(post$gen_rate),
+      vl_midpoint = median(post$vl_midpoint),
+      vl_slope    = median(post$vl_slope),
+      phi         = apply(post$phi_by_role,   2, median),
+      kappa       = apply(post$kappa_by_role, 2, median),
+      beta_susc   = if (!is.null(post$beta_susc))
+        apply(as.matrix(post$beta_susc), 2, median) else numeric(0),
+      beta_inf    = if (!is.null(post$beta_inf))
+        apply(as.matrix(post$beta_inf),  2, median) else numeric(0)
+    )
+
+  } else if (!is.null(sim_params)) {
+    required <- c("beta1", "beta2", "alpha_comm",
+                  "gen_shape", "gen_rate", "phi", "kappa")
+    missing_keys <- setdiff(required, names(sim_params))
+    if (length(missing_keys) > 0)
+      stop("sim_params is missing required fields: ",
+           paste(missing_keys, collapse = ", "))
+
+    sim_params$vl_midpoint <- sim_params$vl_midpoint %||% 1.0
+    sim_params$vl_slope    <- sim_params$vl_slope    %||% 1.0
+    sim_params$beta_susc   <- sim_params$beta_susc   %||% numeric(0)
+    sim_params$beta_inf    <- sim_params$beta_inf    %||% numeric(0)
+    sim_params
+
+  } else {
+    stop("Provide either a Stan `fit` object or a `sim_params` list.")
+  }
+}
+
+
+
+
+#' Reconstruct Transmission Chains
 #'
-#' Saves ALL potential infectors for each episode, not just the most likely one.
+#' Saves ALL potential infectors for each infection episode.
+#' Works in two modes: estimation mode (supply a \code{fit} object) or
+#' simulation mode (supply a \code{sim_params} list of known ground-truth values).
 #'
-#' @param fit A stanfit object.
-#' @param stan_data The list data passed to Stan.
-#' @param min_prob_threshold Ignore links with probability below this (default 0.01).
-#' Reconstruct Transmission Chains (Covariate-Aware)
+#' @param fit A \code{stanfit} object from \code{rstan}. Required unless
+#'   \code{sim_params} is provided.
+#' @param stan_data The list of data passed to Stan (or used in simulation).
+#' @param sim_params A named list of ground-truth parameters for simulation mode.
+#'   Required fields: \code{beta1}, \code{beta2}, \code{alpha_comm},
+#'   \code{gen_shape}, \code{gen_rate}, \code{phi}, \code{kappa}.
+#'   Optional: \code{vl_midpoint}, \code{vl_slope}, \code{beta_susc}, \code{beta_inf}.
+#' @param min_prob_threshold Minimum probability to retain a transmission link.
+#'   Default \code{0.01}.
+#' @return A data frame with columns: \code{target}, \code{hh_id}, \code{day},
+#'   \code{source}, \code{prob}.
 #' @export
-reconstruct_transmission_chains <- function(fit, stan_data, min_prob_threshold = 0.01) {
+reconstruct_transmission_chains <- function(fit = NULL,
+                                            stan_data,
+                                            sim_params = NULL,
+                                            min_prob_threshold = 0.01) {
+  # 1. Extract Parameters (from Stan fit OR simulation inputs)
+  p <- .extract_params(fit = fit, sim_params = sim_params)
 
-  # 1. Extract Posterior Medians
-  post <- rstan::extract(fit)
-  p_beta1 <- median(post$beta1)
-  p_beta2 <- median(post$beta2)
-  p_alpha <- median(post$alpha_comm)
+  p_beta1       <- p$beta1
+  p_beta2       <- p$beta2
+  p_alpha       <- p$alpha_comm
+  p_gen_shape   <- p$gen_shape
+  p_gen_rate    <- p$gen_rate
+  p_vl_midpoint <- p$vl_midpoint
+  p_vl_slope    <- p$vl_slope
+  p_phi         <- p$phi
+  p_kappa       <- p$kappa
+  p_beta_susc   <- p$beta_susc
+  p_beta_inf    <- p$beta_inf
 
-  p_gen_shape <- median(post$gen_shape)
-  p_gen_rate  <- median(post$gen_rate)
-  p_vl_midpoint <- median(post$vl_midpoint)
-  p_vl_slope    <- median(post$vl_slope)
-
-  p_phi   <- apply(post$phi_by_role,   2, median)
-  p_kappa <- apply(post$kappa_by_role, 2, median)
-
-  # --- NEW: Extract Covariate Coefficients ---
-  # Check if they exist in posterior (model might be run with K=0)
-  p_beta_susc <- if(!is.null(post$beta_susc)) apply(as.matrix(post$beta_susc), 2, median) else numeric(0)
-  p_beta_inf  <- if(!is.null(post$beta_inf))  apply(as.matrix(post$beta_inf), 2, median) else numeric(0)
 
   # 2. Setup Data
   N <- stan_data$N
