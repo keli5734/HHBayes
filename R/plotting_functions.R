@@ -340,7 +340,13 @@ reconstruct_transmission_chains <- function(fit = NULL,
     }
   }
 
-  if(length(results_list) > 0) do.call(rbind, results_list) else data.frame()
+  if (length(results_list) > 0) {
+    out <- do.call(rbind, results_list)
+    rownames(out) <- NULL   # strip all row names
+    out
+  } else {
+    data.frame()
+  }
 }
 
 #' Plot Household Timeline with Person-Centric Reinfections
