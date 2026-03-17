@@ -1,4 +1,13 @@
 
+# Suppress R CMD CHECK "no visible binding" NOTEs for dplyr NSE column names.
+utils::globalVariables(c(
+  "susceptible_at_start", "first_inf_time", "infector_id",
+  "has_index", "n_index", "is_index", "is_secondary",
+  "n_total", "n_index_role", "n_suscept", "n_secondary",
+  "sar_role", "sar", "sar_sd", "sar_se"
+))
+
+
 #' Calculate Secondary Attack Rate (Robust)
 #'
 #' Computes household secondary attack rates (SAR) from simulation output,
@@ -55,8 +64,10 @@
 #' }
 #'
 #' @importFrom dplyr filter group_by summarize mutate left_join n_distinct
+#'   select case_when n
 #' @importFrom rlang abort warn inform
 #' @importFrom stats sd
+#' @importFrom utils globalVariables
 #' @export
 calculate_sar_robust <- function(sim_result,
                                  generation = c("strict_secondary", "all_subsequent"),
@@ -76,7 +87,6 @@ calculate_sar_robust <- function(sim_result,
   if (!is.logical(verbose) || length(verbose) != 1)
     rlang::abort("`verbose` must be a single logical value (TRUE or FALSE).")
 
-  # Resolve and validate enumerated args
   generation <- match.arg(generation)
   pooling    <- match.arg(pooling)
 
@@ -100,7 +110,6 @@ calculate_sar_robust <- function(sim_result,
 
   # ------------------------------------------------------------------
   # FIX 6: Susceptibility at enrollment
-  # Exclude individuals already immune at study entry from the denominator.
   # ------------------------------------------------------------------
   n_immune_entry <- sum(!hh_df$susceptible_at_start, na.rm = TRUE)
   if (verbose && n_immune_entry > 0)
@@ -112,7 +121,7 @@ calculate_sar_robust <- function(sim_result,
 
   # ------------------------------------------------------------------
   # STEP 1: Per-household index identification
-  # FIX 5: Zero-infection households handled explicitly (first_inf = Inf)
+  # FIX 5: Zero-infection households -> first_inf_time = Inf
   # FIX 2: Co-index ties flagged
   # ------------------------------------------------------------------
   hh_summary <- hh_df %>%
@@ -138,7 +147,6 @@ calculate_sar_robust <- function(sim_result,
       }, hh_id, first_inf_time)
     )
 
-  # FIX 2: warn about co-index ties
   n_ties <- sum(hh_summary$n_index > 1, na.rm = TRUE)
   if (verbose && n_ties > 0)
     rlang::inform(sprintf(
@@ -156,7 +164,7 @@ calculate_sar_robust <- function(sim_result,
       dplyr::filter(
         !is.na(infection_time),
         infection_time > first_inf_time,
-        is.na(infector_id)   # no within-HH infector recorded
+        is.na(infector_id)
       ) %>%
       nrow()
 
@@ -184,7 +192,7 @@ calculate_sar_robust <- function(sim_result,
         generation == "strict_secondary" ~
           !is.na(infection_time) &
           !is_index &
-          (infector_id %in% person_id[is_index == TRUE]),
+          (infector_id %in% person_id[is_index]),
         generation == "all_subsequent" ~
           !is.na(infection_time) & !is_index,
         TRUE ~
@@ -192,19 +200,18 @@ calculate_sar_robust <- function(sim_result,
       )
     )
 
-  # Degrade gracefully if infector_id not tracked
   if (generation == "strict_secondary" && all(is.na(hh_df$infector_id))) {
     rlang::warn(
-      "[SAR] `infector_id` is all NA — `strict_secondary` falls back to `all_subsequent`."
+      "[SAR] `infector_id` is all NA -- `strict_secondary` falls back to `all_subsequent`."
     )
     hh_df <- dplyr::mutate(hh_df, is_secondary = !is.na(infection_time) & !is_index)
   }
 
   # ------------------------------------------------------------------
-  # FIX 3: Consistent pooling for BOTH overall and age-specific SAR
+  # FIX 3: Consistent pooling for overall and age-specific SAR
   # ------------------------------------------------------------------
 
-  # ── Household-level SAR per role ──────────────────────────────────
+  # Household-level SAR per role
   hh_role_sar <- hh_df %>%
     dplyr::filter(has_index) %>%
     dplyr::group_by(hh_id, role) %>%
@@ -217,7 +224,7 @@ calculate_sar_robust <- function(sim_result,
       .groups = "drop"
     )
 
-  # ── Household-level OVERALL SAR ───────────────────────────────────
+  # Household-level overall SAR
   hh_overall_sar <- hh_df %>%
     dplyr::filter(has_index) %>%
     dplyr::group_by(hh_id) %>%
@@ -229,7 +236,7 @@ calculate_sar_robust <- function(sim_result,
       .groups = "drop"
     )
 
-  # ── Aggregate ─────────────────────────────────────────────────────
+  # Aggregate
   if (pooling == "mean_of_hh") {
 
     overall_sar <- mean(hh_overall_sar$sar_hh, na.rm = TRUE)
@@ -238,8 +245,8 @@ calculate_sar_robust <- function(sim_result,
       dplyr::group_by(role) %>%
       dplyr::summarize(
         n_households = dplyr::n(),
-        sar          = mean(sar_role,   na.rm = TRUE),
-        sar_sd       = stats::sd(sar_role, na.rm = TRUE),
+        sar          = mean(sar_role,        na.rm = TRUE),
+        sar_sd       = stats::sd(sar_role,   na.rm = TRUE),
         sar_se       = sar_sd / sqrt(sum(!is.na(sar_role))),
         sar_lo       = sar - 1.96 * sar_se,
         sar_hi       = sar + 1.96 * sar_se,
@@ -248,7 +255,7 @@ calculate_sar_robust <- function(sim_result,
         .groups = "drop"
       )
 
-  } else if (pooling == "pooled") {
+  } else {  # pooled
 
     overall_sar <- sum(hh_overall_sar$n_secondary, na.rm = TRUE) /
       sum(hh_overall_sar$n_suscept,   na.rm = TRUE)
@@ -264,9 +271,7 @@ calculate_sar_robust <- function(sim_result,
       )
   }
 
-  # Guard against degenerate result
   if (is.na(overall_sar) || is.nan(overall_sar)) overall_sar <- 0
-
   age_sar$overall_sar <- overall_sar
 
   # ------------------------------------------------------------------
@@ -292,8 +297,7 @@ calculate_sar_robust <- function(sim_result,
 
 
 # ============================================================================
-# calculate_sar_quick() — drop-in convenience wrapper
-# Matches original return format; no other calling code needs to change.
+# calculate_sar_quick() -- convenience wrapper
 # ============================================================================
 
 #' Quick SAR Calculator (Convenience Wrapper)
