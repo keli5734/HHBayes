@@ -67,11 +67,11 @@ rates <- summarize_attack_rates(sim)
 rates$primary_by_role
 
 # 3. Plot simulated data 
-my_plot <- plot_epidemic_curve(sim_res, surveillance_data, start_date_str = study_start, bin_width = 7)
+my_plot <- plot_epidemic_curve(sim, surveillance_data, start_date_str = study_start, bin_width = 7)
 print(my_plot)
 
 # 4. Prepare data and fit the Bayesian model
-df_for_stan <- sim_res$diagnostic_df
+df_for_stan <- sim$diagnostic_df
 my_priors <- list(
     beta1      = list(dist = "normal",  params = c(-5, 1)),
     beta2      = list(dist = "normal",  params = c(-5, 1)),
