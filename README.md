@@ -66,20 +66,54 @@ sim <- simulate_multiple_households_comm(
 rates <- summarize_attack_rates(sim)
 rates$primary_by_role
 
-# 3. Prepare data and fit the Bayesian model
-stan_input <- prepare_stan_data(sim$diagnostic_df,
-                                use_vl_data      = 1,
-                                surveillance_df  = surveillance_data,
-                                study_start_date = as.Date("2024-07-01"),
-                                study_end_date   = as.Date("2025-06-30"),
-                                seed = 123)
+# 3. Plot simulated data 
+my_plot <- plot_epidemic_curve(sim_res, surveillance_data, start_date_str = study_start, bin_width = 7)
+print(my_plot)
+
+# 4. Prepare data and fit the Bayesian model
+df_for_stan <- sim_res$diagnostic_df
+my_priors <- list(
+    beta1      = list(dist = "normal",  params = c(-5, 1)),
+    beta2      = list(dist = "normal",  params = c(-5, 1)),
+    alpha      = list(dist = "normal",  params = c(-7, 1)),
+    phi_role   = list(dist = "normal",  params = c(0, 0.5)),
+    kappa_role = list(dist = "normal",  params = c(0, 0.5)),
+    vl_midpoint = list(dist = "normal", params = c(3, .2)),  # adjust if Log10
+    vl_slope    = list(dist = "normal", params = c(2.5,  0.2))   # adjust if Log10
+)
+
+VL_params_list <- list(
+    adult   = list(v_p=4.14, t_p=5.09, lambda_g=2.31, lambda_d=2.71),
+    infant  = list(v_p=5.84, t_p=4.09, lambda_g=2.82, lambda_d=1.01),
+    toddler = list(v_p=5.84, t_p=4.09, lambda_g=2.82, lambda_d=1.01),
+    elderly = list(v_p=2.95, t_p=5.1,  lambda_g=3.15, lambda_d=0.87)
+)
+
+
+stan_input <- prepare_stan_data(
+    df_clean          = df_for_stan,
+    surveillance_df   = surveillance_data,
+    study_start_date  = as.Date(study_start),
+    study_end_date    = as.Date(study_end),
+    use_vl_data       = TRUE,
+    use_curve_logic   = FALSE,         
+    delta             = 0,
+    imputation_params = VL_params_list,
+    priors            = my_priors        
+)
   
 options(mc.cores = parallel::detectCores())
 
 fit <- fit_household_model(stan_input, iter = 2000, chains = 4)
 
-# 4. Visualize
-plot_posterior_distributions(fit)
+# 5. Visualize
+print(fit, probs = c(0.025, 0.5, 0.975))
+p_post <- plot_posterior_distributions(fit)
+chains <- reconstruct_transmission_chains(fit = fit, stan_data = stan_input, min_prob_threshold =  .01)
+selected_hh = 1
+p_hh <- plot_household_timeline(chains, stan_input, target_hh_id = selected_hh) # define selected_hh. 
+print(p_hh)
+
 ```
 
 ---
