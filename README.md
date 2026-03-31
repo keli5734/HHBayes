@@ -501,7 +501,7 @@ v_component = (max(0, VL) / vl_midpoint)^vl_slope
 
 **Scenario 2: Ct Value Data** (`use_vl_data = TRUE, vl_type = 0`)  
 ```r
-v_component = 1 / (1 + exp((vl_midpoint-Ct) / vl_slope))
+v_component = 1 / (1 + exp((VL - vl_midpoint) / vl_slope))
 ```
 **Estimated parameters:** `vl_midpoint`, `vl_slope`
 
