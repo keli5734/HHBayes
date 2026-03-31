@@ -78,8 +78,8 @@ my_priors <- list(
     alpha      = list(dist = "normal",  params = c(-7, 1)),
     phi_role   = list(dist = "normal",  params = c(0, 0.5)),
     kappa_role = list(dist = "normal",  params = c(0, 0.5)),
-    vl_midpoint = list(dist = "normal", params = c(3, .2)),  # adjust if Log10
-    vl_slope    = list(dist = "normal", params = c(2.5,  0.2))   # adjust if Log10
+    vl_midpoint = list(dist = "normal", params = c(3, 0.5)),  # adjust if using Ct values
+    vl_slope    = list(dist = "normal", params = c(2.5,  0.5))   # adjust if using Ct values
 )
 
 VL_params_list <- list(
