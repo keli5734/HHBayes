@@ -182,7 +182,7 @@ household_profile <- list(
 
 ### Step 4: Define Intervention Strategies
 
-Interventions (vaccination, masking, prophylaxis, etc.) are specified as a list via `covariates_config`. Each entry defines an intervention with a name, what it affects, its efficacy, and role-specific coverage probabilities:
+Interventions (e.g., vaccination) are specified as a list via `covariates_config`. Each entry defines an intervention with a name, what it affects, its efficacy, and role-specific coverage probabilities:
 
 ```r
 sim_config <- list(
@@ -557,7 +557,7 @@ my_priors <- list(
 
 ### Example
 ```r
-# Baseline: no covariates → estimates core params + VL curve only
+# Baseline: no covariates → estimates core params
 stan_input <- prepare_stan_data(
   ...,
   use_vl_data = 1,
@@ -565,12 +565,12 @@ stan_input <- prepare_stan_data(
   covariates_infectivity    = NULL
 )
 
-# With covariates → also estimates vaccine/masking effects
+# With covariates → also estimates vaccine
 stan_input <- prepare_stan_data(
   ...,
   use_vl_data = 1,
   covariates_susceptibility = c("vacc_status"),
-  covariates_infectivity    = c("vacc_status", "masked")
+  covariates_infectivity    = c("vacc_status")
 )
 ```
 
