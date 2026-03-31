@@ -55,10 +55,10 @@ fit_household_model <- function(stan_data,
 
       # Conditional covariate effects (only add if covariates are present)
       if (K_susc > 0) {
-        init_list$beta_susc <- rep(0.0, K_susc)  # Start at no effect
+        init_list$beta_susc <- array(0.0, K_susc)  # Start at no effect
       }
       if (K_inf > 0) {
-        init_list$beta_inf <- rep(0.0, K_inf)    # Start at no effect
+        init_list$beta_inf <- array(0.0, K_inf)    # Start at no effect
       }
 
       return(init_list)
