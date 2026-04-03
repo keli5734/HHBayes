@@ -591,4 +591,6 @@ This work was supported by a grant from the National Institutes of Health (R01AI
 
 If you use HHBayes in your work, please cite:
 
-> Ke Li & Yiren Hou (2026). HHBayes: Bayesian Household Transmission Modeling in R. GitHub: https://github.com/keli5734/HHBayes
+> Li K, Hou Y, Mukherjee B, Pitzer VE, Weinberger DM (2026). HHBayes: A Flexible Bayesian Framework for Simulating and Analyzing Household Transmission Dynamics. medRxiv. https://www.medrxiv.org/content/10.64898/2026.04.01.26349903v1
+
+
