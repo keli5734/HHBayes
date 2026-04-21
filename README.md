@@ -3,6 +3,7 @@
 <!-- badges: start -->
 [![R-CMD-check](https://img.shields.io/badge/R--CMD--check-passing-brightgreen)](https://github.com/keli5734/HHBayes)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![CRAN DOI](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.HHBayes-blue.svg)](https://doi.org/10.32614/CRAN.package.HHBayes)
 <!-- badges: end -->
 
 > **Bayesian Household Transmission Modeling in R**
@@ -21,6 +22,20 @@ Household transmission studies generate rich but complex data — repeated tests
 4. **Analyze** results with built-in tools for attack rates, transmission chain reconstruction, and publication-ready plots.
 
 ---
+
+## Authors
+
+- **Ke Li** — Package creator and maintainer
+- **Yiren Hou** — Package creator and maintainer
+
+## Citation
+
+If you use HHBayes in your work, please cite:
+
+> Li K, Hou Y, Mukherjee B, Pitzer VE, Weinberger DM (2026). HHBayes: A Flexible Bayesian Framework for Simulating and Analyzing Household Transmission Dynamics. medRxiv. https://www.medrxiv.org/content/10.64898/2026.04.01.26349903v1
+
+---
+
 
 ## Installation
 
@@ -581,16 +596,5 @@ When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not e
 ## Acknowledgments
 
 This work was supported by a grant from the National Institutes of Health (R01AI137093). The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
-
-## Authors
-
-- **Ke Li** — Package creator and maintainer
-- **Yiren Hou** — Package creator and maintainer
-
-## Citation
-
-If you use HHBayes in your work, please cite:
-
-> Li K, Hou Y, Mukherjee B, Pitzer VE, Weinberger DM (2026). HHBayes: A Flexible Bayesian Framework for Simulating and Analyzing Household Transmission Dynamics. medRxiv. https://www.medrxiv.org/content/10.64898/2026.04.01.26349903v1
 
 
