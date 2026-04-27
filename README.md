@@ -67,7 +67,7 @@ surveillance_data <- data.frame(
   cases = 0.1 + 100 * exp(-0.0002 * (as.numeric(dates_weekly - mean(dates_weekly)))^2) + abs(rnorm( length(dates_weekly),mean = 0, sd = 10))
 )
 
-# 1. Simulate 50 households with ODE-based viral dynamics
+# 1. Simulate 50 households
 sim <- simulate_multiple_households_comm(
   n_households = 50,
   viral_testing = "viral load",
