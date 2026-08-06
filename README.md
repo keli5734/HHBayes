@@ -31,11 +31,9 @@ Household transmission studies generate rich but complex data — repeated tests
 ## Citation
 
 If you use HHBayes in your work, please cite:
-
 > Li K, Hou Y, Mukherjee B, Pitzer VE, Weinberger DM (2026). HHBayes: A Flexible Bayesian Framework for Simulating and Analyzing Household Transmission Dynamics. medRxiv. https://www.medrxiv.org/content/10.64898/2026.04.01.26349903v1
 
 ---
-
 
 ## Installation
 
@@ -47,6 +45,32 @@ devtools::install_github("keli5734/HHBayes")
 ### Prerequisites
 
 HHBayes depends on [RStan](https://mc-stan.org/rstan/), which requires a working C++ toolchain. See the [RStan Getting Started Guide](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started) for platform-specific setup.
+
+---
+
+## A Note on Prior Scales
+
+Several parameters are **sampled on the log scale** and then exponentiated to the
+biological (natural) scale inside the Stan model. This matters when you specify
+priors:
+
+- **Log-scale parameters:** `phi_role`, `kappa_role` (role susceptibility /
+  infectivity multipliers) and `beta1`, `beta2`, `alpha` (transmission and
+  community-acquisition rates). For these, a `dist = "normal"` prior on the log
+  scale **is** a LogNormal prior on the biological quantity, and a
+  `dist = "uniform"` prior is a log-uniform prior on the biological quantity.
+  A `"lognormal"` prior is **not allowed** for these parameters: on a log-scale
+  parameter it becomes one-sided (it forces the biological multiplier to be > 1),
+  which is not a lognormal on the biological scale. `prepare_stan_data()` will
+  stop with an informative error if you request it.
+- **Natural-scale parameters:** `vl_midpoint`, `vl_slope`, `gen_shape`,
+  `gen_rate`. These are sampled directly on the biological scale and accept
+  `"normal"`, `"uniform"`, or `"lognormal"` priors.
+- **Covariate effects** (`beta_susc`, `beta_inf`) are log-linear coefficients and
+  accept `"normal"` or `"uniform"` priors only.
+
+> **Rule of thumb:** to place a LogNormal(μ, σ) prior on a role multiplier or a
+> transmission rate, use `dist = "normal", params = c(μ, σ)`.
 
 ---
 
@@ -81,12 +105,16 @@ sim <- simulate_multiple_households_comm(
 rates <- summarize_attack_rates(sim)
 rates$primary_by_role
 
-# 3. Plot simulated data 
+# 3. Plot simulated data
 my_plot <- plot_epidemic_curve(sim, surveillance_data, start_date_str = study_start, bin_width = 7)
 print(my_plot)
 
 # 4. Prepare data and fit the Bayesian model
 df_for_stan <- sim$diagnostic_df
+
+# NOTE: phi_role, kappa_role, beta1, beta2, alpha are sampled on the LOG scale,
+# so dist = "normal" here == LogNormal on the biological quantity. See
+# "A Note on Prior Scales" above.
 my_priors <- list(
     beta1      = list(dist = "normal",  params = c(-5, 1)),
     beta2      = list(dist = "normal",  params = c(-5, 1)),
@@ -104,31 +132,32 @@ VL_params_list <- list(
     elderly = list(v_p=2.95, t_p=5.1,  lambda_g=3.15, lambda_d=0.87)
 )
 
-
 stan_input <- prepare_stan_data(
     df_clean          = df_for_stan,
     surveillance_df   = surveillance_data,
     study_start_date  = as.Date(study_start),
     study_end_date    = as.Date(study_end),
     use_vl_data       = TRUE,
-    use_curve_logic   = FALSE,         
+    use_curve_logic   = FALSE,
     delta             = 0,
     imputation_params = VL_params_list,
-    priors            = my_priors        
+    priors            = my_priors
 )
-  
+
 options(mc.cores = parallel::detectCores())
 
-fit <- fit_household_model(stan_input, iter = 2000, chains = 4)
+# fit_household_model() automatically drops internal bookkeeping quantities AND
+# any viral-component parameters that are inert under this configuration, so the
+# printed fit shows only parameters informed by the likelihood.
+fit <- fit_household_model(stan_input, iter = 2000, warmup = 1000, chains = 4, seed = 123, cores = 4)
 
 # 5. Visualize
 print(fit, probs = c(0.025, 0.5, 0.975))
 p_post <- plot_posterior_distributions(fit)
 chains <- reconstruct_transmission_chains(fit = fit, stan_data = stan_input, min_prob_threshold =  .01)
 selected_hh = 1
-p_hh <- plot_household_timeline(chains, stan_input, target_hh_id = selected_hh) # define selected_hh. 
+p_hh <- plot_household_timeline(chains, stan_input, target_hh_id = selected_hh) # define selected_hh.
 print(p_hh)
-
 ```
 
 ---
@@ -158,19 +187,21 @@ If no surveillance data is provided, you can supply custom `seasonal_forcing_lis
 
 ### Step 2: Define the Contact Matrix
 
-By default, all household members contact each other equally. A `role_mixing_matrix` lets you specify **differential contact weights** between roles. Each cell represents the relative contact intensity between a source (row) and target (column):
+By default, all household members contact each other equally. A `role_mixing_matrix` lets you specify **differential contact weights** between roles.
+
+**Orientation convention (important for asymmetric matrices):** each cell `[target, source]` is the contact weight *from* the source role (column) *to* the target role (row). This matches how the weight enters the force of infection — force on a susceptible target accumulates the infectivity of each source scaled by this weight. For symmetric matrices the orientation is irrelevant; for asymmetric ones, make sure rows are targets and columns are sources.
 
 ```r
 role_mixing_weights <- matrix(c(
-# Target: Infant Toddler Adult Elderly
-          0.0,   0.5,    1.0,  0.5,    # Source: Infant  (high contact with adults)
-          0.5,   0.9,    0.7,  0.5,    # Source: Toddler (high peer contact)
-          1.0,   0.7,    0.6,  0.7,    # Source: Adult    
-          0.5,   0.5,    0.7,  0.0     # Source: Elderly (limited infant contact)
+# Source:  Infant Toddler Adult Elderly
+          0.0,   0.5,    1.0,  0.5,    # Target: Infant  (receives high weight from adults)
+          0.5,   0.9,    0.7,  0.5,    # Target: Toddler (high peer contact)
+          1.0,   0.7,    0.6,  0.7,    # Target: Adult
+          0.5,   0.5,    0.7,  0.0     # Target: Elderly (limited infant contact)
 ), nrow = 4, byrow = TRUE,
    dimnames = list(
-     c("infant", "toddler", "adult", "elderly"),
-     c("infant", "toddler", "adult", "elderly")))
+     c("infant", "toddler", "adult", "elderly"),   # rows = targets
+     c("infant", "toddler", "adult", "elderly")))  # cols = sources
 ```
 
 This matrix is expanded internally to an N x N individual-level contact matrix for each household, based on the role of each member. For example, in a household with roles `c("adult", "adult", "infant")`, the adult-to-infant weight (1.0) is applied to those pairs.
@@ -251,7 +282,6 @@ The output is a list with two dataframes:
 
 ```r
 rates <- summarize_attack_rates(sim_res)
-
 rates$primary_overall      # Overall primary attack rate
 rates$primary_by_role      # Attack rate by age group
 rates$reinf_overall        # Overall reinfection summary
@@ -284,15 +314,24 @@ df_for_stan <- sim_res$diagnostic_df %>%
   dplyr::left_join(person_covariates, by = c("hh_id", "person_id"))
 ```
 
-**Define priors** for the Bayesian model. Supported distributions are `"normal"`, `"uniform"`, and `"lognormal"`:
+**Define priors** for the Bayesian model.
+
+Supported distributions depend on the parameter's scale (see "A Note on Prior Scales" above):
+
+- `phi_role`, `kappa_role`, `beta1`, `beta2`, `alpha` — sampled on the **log
+  scale**; use `"normal"` (== LogNormal on the biological scale) or `"uniform"`
+  (== log-uniform). `"lognormal"` is rejected for these.
+- `vl_midpoint`, `vl_slope`, `gen_shape`, `gen_rate` — sampled on the **natural
+  scale**; accept `"normal"`, `"uniform"`, or `"lognormal"`.
+- covariate effects — accept `"normal"` or `"uniform"`.
 
 ```r
 my_priors <- list(
   beta1      = list(dist = "normal",  params = c(-5, 1)),
   beta2      = list(dist = "normal",  params = c(-5, 1)),
   alpha      = list(dist = "normal",  params = c(-7, 1)),
-  phi_role   = list(dist = "normal",  params = c(0, 1)),
-  kappa_role = list(dist = "normal",  params = c(0, 1)),
+  phi_role   = list(dist = "normal",  params = c(0, 1)),   # LogNormal(0,1) on the multiplier
+  kappa_role = list(dist = "normal",  params = c(0, 1)),   # LogNormal(0,1) on the multiplier
   vl_midpoint = list(dist = "normal", params = c(4, 1.0)),  # adjust if Ct values
   vl_slope    = list(dist = "normal", params = c(1.0,  0.5))   # adjust if Ct values
 )
@@ -318,8 +357,8 @@ stan_input <- prepare_stan_data(
   study_start_date = as.Date(study_start),
   study_end_date   = as.Date(study_end),
   use_vl_data      = TRUE,
-  use_curve_logic  = FALSE,         
-  delta = 0,                        
+  use_curve_logic  = FALSE,
+  delta = 0,
   imputation_params = VL_params_list,
   priors           = my_priors,
   role_mixing_matrix = role_mixing_weights)
@@ -327,31 +366,45 @@ stan_input <- prepare_stan_data(
 
 ### Step 9: Fit the Bayesian Model
 
-`fit_household_model()` runs HMC sampling via `rstan::sampling()`. You can exclude internal bookkeeping parameters to keep the output clean:
+`fit_household_model()` runs HMC sampling via `rstan::sampling()`. By default
+(`drop_inert = TRUE`) it automatically excludes internal bookkeeping quantities
+**and** any viral-component parameters that are inert under your data
+configuration, so the printed fit shows only the parameters that were actually
+informed by the likelihood.
 
 ```r
 options(mc.cores = parallel::detectCores())
 
 fit <- fit_household_model(
   stan_input,
-  pars = c("log_phi_by_role_raw",
-           "log_kappa_by_role_raw",
-           "log_beta1",
-           "log_beta2",
-           "log_alpha_comm",
-           "g_curve_est",
-           "V_term_calc"),
-  include = FALSE,
-  iter    = 2000,
-  warmup  = 1000,
-  chains  = 4,
-  seed    = 123,
-  init_fun = NULL,
-  core    = 4
+  iter   = 2000,
+  warmup = 1000,
+  chains = 4,
+  seed   = 123,
+  cores  = 4
 )
 
 print(fit, probs = c(0.025, 0.5, 0.975))
 ```
+
+**Which parameters are dropped?** `prepare_stan_data()` records the inert set in
+`stan_input$inert_pars` based on your `use_vl_data` / `use_curve_logic` choice,
+and `fit_household_model()` excludes them from the returned object:
+
+| Configuration | Viral component used | Inert (dropped from output) |
+|---|---|---|
+| `use_vl_data = TRUE` | Viral-load / Ct scaling (`vl_midpoint`, `vl_slope`) | `gen_shape`, `gen_rate` |
+| `use_vl_data = FALSE`, `use_curve_logic = TRUE` | Gamma generation-interval curve (`gen_shape`, `gen_rate`) | `vl_midpoint`, `vl_slope` |
+| `use_vl_data = FALSE`, `use_curve_logic = FALSE` | Constant infectiousness | `gen_shape`, `gen_rate`, `vl_midpoint`, `vl_slope` |
+
+Inert parameters are still *sampled* internally (from a neutral pinning prior)
+but never mistaken for estimates, because they are removed from `print(fit)` and
+`rstan::extract(fit)`.
+
+> **Do not pass your own `pars`/`include`** unless you want to take over
+> parameter selection entirely — doing so disables the automatic dropping and the
+> inert parameters will reappear in the output. To keep *everything* for
+> debugging, use `fit_household_model(stan_input, drop_inert = FALSE)`.
 
 ### Step 10: Visualize Results
 
@@ -400,7 +453,6 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `vl_midpoint` | `3.0 or 40` | Reference log10 VL for infectiousness scaling or Ct at 50% infectiousness (sigmoid) |
 | `vl_slope` | `2.5 or 2` | Power-law exponent for log10 VL scaling. or Steepness of Ct-infectiousness sigmoid. |
 
-
 ### Testing and Surveillance
 
 | Parameter | Default | Description |
@@ -412,6 +464,7 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `detect_threshold_Ct` | `40` | Max Ct for positive test (set `35`-`40` for realistic PCR). |
 
 ### Data Preparation & Model Control
+
 | Parameter | Default | Description |
 |---|---|---|
 | `use_vl_data` | `TRUE` | Use actual viral load data vs. generation interval curve. |
@@ -419,12 +472,14 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `delta` | `0` | Household size scaling. Force scaled by `(1/max(n_h,1))^delta`. |
 
 ### Viral Load Parameters (when `vl_type = 1`)
+
 | Parameter | Default | Description |
 |---|---|---|
 | `vl_midpoint` | `3.0` | Reference log10 VL for infectiousness scaling. |
 | `vl_slope` | `2.5` | Power-law exponent for VL scaling: `(VL/vl_midpoint)^vl_slope`. |
 
-### Ct Parameters (when `vl_type = 0`)  
+### Ct Parameters (when `vl_type = 0`)
+
 | Parameter | Default | Description |
 |---|---|---|
 | `vl_midpoint` | `35.0` | Ct value at 50% infectiousness. |
@@ -446,8 +501,6 @@ plot_household_timeline(chains, stan_input, target_hh_id = 11)
 | `plot_covariate_effects()` | Forest plot of intervention effects |
 | `plot_epidemic_curve()` | Epidemic curve overlaid with surveillance |
 | `plot_household_timeline()` | Per-household timeline with transmission arrows |
-| `prepare_stan_data()` | Format data for Stan with conditional parameter setup |
-
 
 ---
 
@@ -475,8 +528,17 @@ $$\lambda_{ih}(t) = \phi_{r_i} \cdot \exp(\boldsymbol{\beta}_{\text{susc}} \cdot
 | $\mathbf{X}_{\text{susc},i}$ | Covariate vector for person $i$ (susceptibility) |
 | $\mathbf{X}_{\text{inf},j}$ | Covariate vector for person $j$ (infectivity) |
 
-
 Individuals progress through **S -> I -> R -> S** with Gamma-distributed duration. Inference is performed via HMC in Stan (`adapt_delta = 0.95`, `max_treedepth = 15`).
+
+### Parameterization and Prior Scale
+
+The role multipliers and rates are parameterized on the **log scale** and mapped to the biological scale inside the model:
+
+$$\phi_{r} = \phi_{\text{ref}} \cdot \exp(\text{log\_}\phi_{r}), \qquad
+\kappa_{r} = \kappa_{\text{ref}} \cdot \exp(\text{log\_}\kappa_{r}), \qquad
+\beta_1 = \exp(\text{log\_}\beta_1), \ \ \text{etc.}$$
+
+Because the sampled quantity is $\text{log\_}\phi_r$, a $\text{Normal}(\mu,\sigma)$ prior placed on it corresponds to a $\text{LogNormal}(\mu,\sigma)$ prior on the biological multiplier $\phi_r$, and a $\text{Uniform}$ prior corresponds to a log-uniform prior. Priors on the viral-load scaling parameters ($\texttt{vl\_midpoint}, \texttt{vl\_slope}$) and generation-interval parameters ($\texttt{gen\_shape}, \texttt{gen\_rate}$) are placed directly on the natural (biological) scale. This is why the software disallows a `"lognormal"` option for the log-scale parameters: applied to a log-scale parameter it would be one-sided and would not represent a lognormal prior on the biological quantity.
 
 ---
 
@@ -485,19 +547,22 @@ Individuals progress through **S -> I -> R -> S** with Gamma-distributed duratio
 The simulation applies **fixed efficacies** during data generation, but the Stan model estimates **log-linear coefficients** to recover those effects:
 
 **Simulation time:**
+
 ```r
 # Vaccination reduces susceptibility by 50%
 if (vaccinated) susceptibility *= 0.5
 ```
 
 **Stan estimation:**
+
 ```r
-# Stan estimates beta_susc ≈ -0.693, because exp(-0.693) ≈ 0.5  
+# Stan estimates beta_susc ≈ -0.693, because exp(-0.693) ≈ 0.5
 susceptibility = phi_role * exp(beta_susc * vacc_status)
 ```
 
 **Interpretation:**
-- `β = 0`: No effect (`exp(0) = 1`)  
+
+- `β = 0`: No effect (`exp(0) = 1`)
 - `β = -0.693`: 50% reduction (`exp(-0.693) ≈ 0.5`)
 - `β = +0.693`: 2× increase (`exp(0.693) ≈ 2.0`)
 - Multiple covariates: Effects multiply on natural scale, add on log scale
@@ -506,84 +571,110 @@ susceptibility = phi_role * exp(beta_susc * vacc_status)
 
 ### Viral Component Scenarios
 
-The model supports **four scenarios** for modeling infectiousness, controlled by `use_vl_data` and `vl_type`:
+The model supports **four scenarios** for modeling infectiousness, controlled by `use_vl_data`, `vl_type`, and `use_curve_logic`:
 
 **Scenario 1: Log10 Viral Load Data** (`use_vl_data = TRUE, vl_type = 1`)
+
 ```r
 v_component = (max(0, VL) / vl_midpoint)^vl_slope
 ```
+
 **Estimated parameters:** `vl_midpoint`, `vl_slope`
 
-**Scenario 2: Ct Value Data** (`use_vl_data = TRUE, vl_type = 0`)  
+**Scenario 2: Ct Value Data** (`use_vl_data = TRUE, vl_type = 0`)
+
 ```r
 v_component = 1 / (1 + exp((VL - vl_midpoint) / vl_slope))
 ```
+
 **Estimated parameters:** `vl_midpoint`, `vl_slope`
 
 **Scenario 3: Generation Interval Curve** (`use_vl_data = FALSE, use_curve_logic = TRUE`)
+
 ```r
 v_component = g_curve[days_since_infection]
 ```
+
 Where `g_curve` is a normalized Gamma distribution.
+
 **Estimated parameters:** `gen_shape`, `gen_rate`
 
 **Scenario 4: Constant Infectiousness** (`use_vl_data = FALSE, use_curve_logic = FALSE`)
+
 ```r
 v_component = 1.0  # No viral dynamics
 ```
-**No additional parameters estimated.**
+
+**No viral-component parameters estimated.**
 
 The final infectiousness is always: `beta1 + beta2 * v_component`
+
+> In every scenario, the viral-component parameters that do **not** apply are
+> inert (sampled from a neutral prior, not informed by the data) and are dropped
+> from the fitted object by `fit_household_model()`. See Step 9.
 
 ---
 
 ## Estimated Parameters
 
-The Stan model jointly estimates a core set of parameters, plus optional parameters that activate based on the data you supply to `prepare_stan_data()`.
-
-## Estimated Parameters
-
-The Stan model uses **conditional parameter estimation** - different parameters are estimated based on your data configuration:
+The Stan model uses **conditional parameter estimation** — which viral-component parameters are informed by the likelihood depends on your data configuration. Parameters that are not informed under a given configuration are inert (prior-only) and are dropped from the fitted object.
 
 ### Always Estimated
+
 | Parameter | Description |
 |---|---|
-| `beta1`, `beta2` | Baseline and viral-dependent transmission rates |
-| `alpha_comm` | Community importation rate |
-| `phi_role` | Role-specific susceptibility multipliers |
-| `kappa_role` | Role-specific infectivity multipliers |
-| `vl_midpoint`, `vl_slope` | Log10 viral load scaling  or Ct value scaling| `use_vl_data = TRUE`|
+| `beta1`, `beta2` | Baseline and viral-dependent transmission rates (log-scale priors) |
+| `alpha_comm` | Community importation rate (log-scale prior) |
+| `phi_role` | Role-specific susceptibility multipliers (log-scale priors) |
+| `kappa_role` | Role-specific infectivity multipliers (log-scale priors) |
 
 ### Conditionally Estimated
+
 | Parameter | Description | When Estimated |
 |---|---|---|
-| `gen_shape`, `gen_rate` | Generation interval curve | `use_vl_data = FALSE` AND `use_curve_logic = TRUE` |
+| `vl_midpoint`, `vl_slope` | Viral-load / Ct infectiousness scaling | `use_vl_data = TRUE` |
+| `gen_shape`, `gen_rate` | Generation-interval curve | `use_vl_data = FALSE` AND `use_curve_logic = TRUE` |
 | `beta_susc` | Susceptibility covariate effects | `covariates_susceptibility` provided |
 | `beta_inf` | Infectivity covariate effects | `covariates_infectivity` provided |
 
+> Under Scenario 4 (`use_vl_data = FALSE`, `use_curve_logic = FALSE`) none of the
+> viral-component parameters (`vl_midpoint`, `vl_slope`, `gen_shape`, `gen_rate`)
+> are estimated.
+
 ### Flexible Prior Support
-All parameters support flexible priors (`"normal"`, `"uniform"`, `"lognormal"`):
+
+Priors are placed on the scale at which each parameter is sampled (see "A Note on Prior Scales"):
+
+- **Log-scale** (`phi_role`, `kappa_role`, `beta1`, `beta2`, `alpha`): `"normal"`
+  or `"uniform"`. A `"normal"` prior here is a LogNormal prior on the biological
+  quantity. `"lognormal"` is **not permitted** and raises an error.
+- **Natural-scale** (`vl_midpoint`, `vl_slope`, `gen_shape`, `gen_rate`):
+  `"normal"`, `"uniform"`, or `"lognormal"`.
+- **Covariate effects**: `"normal"` or `"uniform"`.
+
 ```r
 my_priors <- list(
-  phi_role   = list(dist = "normal", params = c(0, 0.5)),    # Tighter susceptibility prior
-  kappa_role = list(dist = "lognormal", params = c(0, 0.3)), # LogNormal infectivity prior
+  phi_role   = list(dist = "normal", params = c(0, 0.5)),  # LogNormal(0,0.5) on the multiplier
+  kappa_role = list(dist = "normal", params = c(0, 0.3)),  # LogNormal(0,0.3) on the multiplier
+  vl_slope   = list(dist = "lognormal", params = c(0, 0.3)) # natural-scale param: lognormal OK
 )
 ```
 
 ### Example
+
 ```r
 # Baseline: no covariates → estimates core params
 stan_input <- prepare_stan_data(
   ...,
-  use_vl_data = 1,
+  use_vl_data = TRUE,
   covariates_susceptibility = NULL,
   covariates_infectivity    = NULL
 )
 
-# With covariates → also estimates vaccine
+# With covariates → also estimates vaccine effects
 stan_input <- prepare_stan_data(
   ...,
-  use_vl_data = 1,
+  use_vl_data = TRUE,
   covariates_susceptibility = c("vacc_status"),
   covariates_infectivity    = c("vacc_status")
 )
@@ -596,5 +687,3 @@ When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not e
 ## Acknowledgments
 
 This work was supported by a grant from the National Institutes of Health (R01AI137093). The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
-
-

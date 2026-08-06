@@ -85,6 +85,35 @@ prepare_stan_data <- function(df_clean,
   p_phi_role   <- parse_prior(priors$phi_role,   1, c(0, 1))
   p_kappa_role <- parse_prior(priors$kappa_role, 1, c(0, 1))
 
+  # =========================================================
+  # 1b. VALIDATE PRIOR SCALE (see manuscript prior table)
+  # =========================================================
+  # phi_role, kappa_role, beta1, beta2, alpha are sampled on the LOG scale.
+  #   Normal(mu, sigma) here  ==  LogNormal(mu, sigma) on the biological quantity.
+  #   Uniform(a, b) here      ==  log-uniform on the biological quantity.
+  # A 'lognormal' prior on a log-scale parameter is one-sided and NOT a lognormal
+  # on the biological scale, so it is disallowed.
+  log_scale_priors <- c("phi_role", "kappa_role", "beta1", "beta2", "alpha")
+  for (nm in log_scale_priors) {
+    d <- priors[[nm]]$dist
+    if (!is.null(d) && tolower(d) == "lognormal") {
+      stop(sprintf(paste0(
+        "Prior for '%s' is applied on the LOG scale, so 'lognormal' is one-sided and\n",
+        "  does not give a lognormal on the biological scale.\n",
+        "  * For LogNormal(mu, sigma) on the biological %s, use dist='normal', params=c(mu, sigma).\n",
+        "  * Otherwise use dist='normal' or dist='uniform' (interpreted on the log scale)."),
+        nm, nm))
+    }
+  }
+
+  # Covariate-effect priors: the Stan model implements only normal/uniform;
+  # anything else is silently treated as uniform, so reject it explicitly.
+  d_cov <- priors$covariates$dist
+  if (!is.null(d_cov) && !tolower(d_cov) %in% c("normal", "uniform")) {
+    stop("Covariate-effect priors support only 'normal' or 'uniform' (log-linear coefficients).")
+  }
+
+
   default_vl_midpoint_prior <- if (detected_vl_type == 0) {
     list(dist = "normal", params = c(33.0, 2.0))   # Ct scale
   } else {
@@ -508,6 +537,25 @@ prepare_stan_data <- function(df_clean,
   }
 
   # =========================================================
+  # 4b. FLAG INERT (PRIOR-ONLY) PARAMETERS
+  # =========================================================
+  # Stan declares every parameter unconditionally, so parameters not used under
+  # the current configuration are still sampled from their prior and would show
+  # up in print(fit) as if estimated. Record which are inert so that
+  # fit_household_model() can exclude them from the returned stanfit.
+  if (as.integer(use_vl_data) == 1) {
+    # Viral-load path: the Gamma generation-interval curve is unused.
+    inert_pars <- c("gen_shape", "gen_rate")
+  } else {
+    # Curve / constant path: the VL scaling parameters are unused.
+    inert_pars <- c("vl_midpoint", "vl_slope")
+    if (as.integer(use_curve_logic) == 0) {
+      # Scenario 4 (constant infectiousness): the Gamma curve is also unused.
+      inert_pars <- c(inert_pars, "gen_shape", "gen_rate")
+    }
+  }
+
+  # =========================================================
   # 5. RETURN LIST
   # =========================================================
 
@@ -535,6 +583,8 @@ prepare_stan_data <- function(df_clean,
 
     vl_type = as.integer(detected_vl_type),
     use_curve_logic = as.integer(use_curve_logic),
+
+    inert_pars = inert_pars,
 
     K_susc = K_susc, X_susc = X_susc,
     K_inf  = K_inf,  X_inf  = X_inf,

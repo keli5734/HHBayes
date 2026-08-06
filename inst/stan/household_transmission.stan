@@ -72,6 +72,13 @@ transformed data {
       }
     }
   }
+
+  // Which viral-component parameters actually enter the likelihood under the
+  // current data configuration. Used below to decide which priors to apply.
+  //   vl_midpoint / vl_slope  are ACTIVE  iff use_vl_data == 1
+  //   gen_shape   / gen_rate  are ACTIVE  iff (use_vl_data == 0 && use_curve_logic == 1)
+  int vl_scaling_active = (use_vl_data == 1);
+  int gen_curve_active  = (use_vl_data == 0 && use_curve_logic == 1);
 }
 
 parameters {
@@ -100,7 +107,9 @@ transformed parameters {
   // Expand parameters to natural scale
   vector<lower=0>[R] phi_by_role;
   vector<lower=0>[R] kappa_by_role;
-  vector[T] g_curve_est;
+  // Default is a flat normalized curve; only overwritten when the Gamma
+  // generation-interval curve is actually used (Scenario 3).
+  vector[T] g_curve_est = rep_vector(1.0 / T, T);
   real<lower=0> alpha_comm = exp(log_alpha_comm);
   real beta1 = exp(log_beta1);
   real beta2 = exp(log_beta2);
@@ -113,8 +122,9 @@ transformed parameters {
   kappa_by_role[1] = reference_kappa;
   for (r in 2:R) kappa_by_role[r] = reference_kappa * exp(log_kappa_by_role_raw[r-1]);
 
-  // 3. Pre-calculate Gamma Curve (for empirical logic)
-  {
+  // 3. Pre-calculate Gamma Curve (only when it feeds the likelihood)
+  //    Skipped entirely under viral-load or constant-infectiousness scenarios.
+  if (gen_curve_active) {
     vector[T] raw_curve;
     for(d in 1:T) raw_curve[d] = exp(gamma_lpdf(d | gen_shape, gen_rate));
     g_curve_est = raw_curve / sum(raw_curve);
@@ -170,22 +180,47 @@ model {
     else beta_inf ~ uniform(prior_cov_params[1], prior_cov_params[2]);
   }
 
-  // Viral Dynamics Priors
-  if (prior_shape_type == 1) gen_shape ~ normal(prior_shape_params[1], prior_shape_params[2]);
-  else if (prior_shape_type == 2) gen_shape ~ uniform(prior_shape_params[1], prior_shape_params[2]);
-  else if (prior_shape_type == 3) gen_shape ~ lognormal(prior_shape_params[1], prior_shape_params[2]);
+  // ---------------------------------------------------------
+  // Viral Dynamics Priors (GUARDED)
+  //
+  // A parameter that never enters the likelihood must still receive a PROPER
+  // prior, otherwise its posterior is improper and the sampler diverges. So
+  // when a viral-component parameter is inert under the current configuration
+  // we replace its (user-configured) prior with a fixed, neutral, in-support
+  // prior that simply pins it harmlessly. It contributes nothing to inference
+  // and, because it is excluded from the returned fit by fit_household_model(),
+  // it will not appear in print(fit) or rstan::extract(fit).
+  // ---------------------------------------------------------
 
-  if (prior_rate_type == 1) gen_rate ~ normal(prior_rate_params[1], prior_rate_params[2]);
-  else if (prior_rate_type == 2) gen_rate ~ uniform(prior_rate_params[1], prior_rate_params[2]);
-  else if (prior_rate_type == 3) gen_rate ~ lognormal(prior_rate_params[1], prior_rate_params[2]);
+  // gen_shape / gen_rate : ACTIVE only under the Gamma generation-interval curve
+  if (gen_curve_active) {
+    if (prior_shape_type == 1)      gen_shape ~ normal(prior_shape_params[1], prior_shape_params[2]);
+    else if (prior_shape_type == 2) gen_shape ~ uniform(prior_shape_params[1], prior_shape_params[2]);
+    else if (prior_shape_type == 3) gen_shape ~ lognormal(prior_shape_params[1], prior_shape_params[2]);
 
-  if (prior_vl_midpoint_type == 1)      vl_midpoint ~ normal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
-  else if (prior_vl_midpoint_type == 2) vl_midpoint ~ uniform(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
-  else if (prior_vl_midpoint_type == 3) vl_midpoint ~ lognormal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+    if (prior_rate_type == 1)      gen_rate ~ normal(prior_rate_params[1], prior_rate_params[2]);
+    else if (prior_rate_type == 2) gen_rate ~ uniform(prior_rate_params[1], prior_rate_params[2]);
+    else if (prior_rate_type == 3) gen_rate ~ lognormal(prior_rate_params[1], prior_rate_params[2]);
+  } else {
+    // INERT: neutral pinning priors (within the declared [1,20] and [0.1,5] bounds)
+    gen_shape ~ normal(3.0, 1.0);
+    gen_rate  ~ normal(0.5, 0.5);
+  }
 
-  if (prior_vl_slope_type == 1)         vl_slope ~ normal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
-  else if (prior_vl_slope_type == 2)    vl_slope ~ uniform(prior_vl_slope_params[1], prior_vl_slope_params[2]);
-  else if (prior_vl_slope_type == 3)    vl_slope ~ lognormal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+  // vl_midpoint / vl_slope : ACTIVE only when viral-load / Ct data are used
+  if (vl_scaling_active) {
+    if (prior_vl_midpoint_type == 1)      vl_midpoint ~ normal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+    else if (prior_vl_midpoint_type == 2) vl_midpoint ~ uniform(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+    else if (prior_vl_midpoint_type == 3) vl_midpoint ~ lognormal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
+
+    if (prior_vl_slope_type == 1)         vl_slope ~ normal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+    else if (prior_vl_slope_type == 2)    vl_slope ~ uniform(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+    else if (prior_vl_slope_type == 3)    vl_slope ~ lognormal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+  } else {
+    // INERT: neutral pinning priors (both declared real<lower=0>)
+    vl_midpoint ~ normal(3.0, 1.0);
+    vl_slope    ~ normal(2.0, 1.0);
+  }
 
   // =========================================================
   // 2. OPTIMIZED LIKELIHOOD (Vectorized Time Loop)
@@ -268,3 +303,4 @@ model {
     }
   }
 }
+

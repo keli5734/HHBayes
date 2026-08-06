@@ -10,6 +10,7 @@ fit_household_model(
   chains = 4,
   warmup = 1000,
   init_fun = NULL,
+  drop_inert = TRUE,
   ...
 )
 }
@@ -24,7 +25,20 @@ fit_household_model(
 
 \item{init_fun}{Function or List. Initial values for the sampler. If NULL, uses robust defaults tailored for this model.}
 
-\item{...}{Additional arguments passed to \code{rstan::sampling} (e.g., \code{cores}, \code{seed}).}
+\item{drop_inert}{Logical. If TRUE (default), viral-component parameters that
+are inert under the current data configuration -- i.e. sampled only from
+their prior and never entering the likelihood -- are excluded from the
+returned \code{stanfit}, together with internal bookkeeping quantities.
+They are still sampled internally; this only removes them from the stored
+and printed object so they cannot be mistaken for estimates. Which set is
+inert is taken from \code{stan_data$inert_pars} (attached by
+\code{prepare_stan_data}); if that field is absent it is derived from the
+\code{use_vl_data} / \code{use_curve_logic} flags. Set FALSE to keep all
+parameters in the output.}
+
+\item{...}{Additional arguments passed to \code{rstan::sampling} (e.g.,
+\code{cores}, \code{seed}, \code{control}, or an explicit \code{pars} /
+\code{include}, which override the automatic dropping).}
 }
 \value{
 A \code{stanfit} object containing the posterior samples.
