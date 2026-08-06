@@ -682,8 +682,4 @@ stan_input <- prepare_stan_data(
 
 When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not enter the model. This means the same Stan model adapts automatically — no need to switch between different model files.
 
----
-
-## Acknowledgments
-
-This work was supported by a grant from the National Institutes of Health (R01AI137093). The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
+ 
