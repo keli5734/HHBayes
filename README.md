@@ -91,7 +91,7 @@ surveillance_data <- data.frame(
   cases = 0.1 + 100 * exp(-0.0002 * (as.numeric(dates_weekly - mean(dates_weekly)))^2) + abs(rnorm( length(dates_weekly),mean = 0, sd = 10))
 )
 
-# 1. Simulate 50 households
+# 1. Simulate 50 households with ODE-based viral dynamics
 sim <- simulate_multiple_households_comm(
   n_households = 50,
   viral_testing = "viral load",
@@ -534,11 +534,11 @@ Individuals progress through **S -> I -> R -> S** with Gamma-distributed duratio
 
 The role multipliers and rates are parameterized on the **log scale** and mapped to the biological scale inside the model:
 
-$$\phi_{r} = \phi_{\text{ref}} \cdot \exp(\text{log\_}\phi_{r}), \qquad
-\kappa_{r} = \kappa_{\text{ref}} \cdot \exp(\text{log\_}\kappa_{r}), \qquad
-\beta_1 = \exp(\text{log\_}\beta_1), \ \ \text{etc.}$$
+$$\phi_{r} = \phi_{\text{ref}} \cdot \exp(\theta^{\phi}_{r}), \qquad
+\kappa_{r} = \kappa_{\text{ref}} \cdot \exp(\theta^{\kappa}_{r}), \qquad
+\beta_1 = \exp(\theta^{\beta_1}), \ \text{etc.}$$
 
-Because the sampled quantity is $\text{log\_}\phi_r$, a $\text{Normal}(\mu,\sigma)$ prior placed on it corresponds to a $\text{LogNormal}(\mu,\sigma)$ prior on the biological multiplier $\phi_r$, and a $\text{Uniform}$ prior corresponds to a log-uniform prior. Priors on the viral-load scaling parameters ($\texttt{vl\_midpoint}, \texttt{vl\_slope}$) and generation-interval parameters ($\texttt{gen\_shape}, \texttt{gen\_rate}$) are placed directly on the natural (biological) scale. This is why the software disallows a `"lognormal"` option for the log-scale parameters: applied to a log-scale parameter it would be one-sided and would not represent a lognormal prior on the biological quantity.
+Because the sampled quantity is $\theta^{\phi}_{r} = \log \phi_r$, a $\text{Normal}(\mu,\sigma)$ prior placed on it corresponds to a $\text{LogNormal}(\mu,\sigma)$ prior on the biological multiplier $\phi_r$, and a $\text{Uniform}$ prior corresponds to a log-uniform prior. Priors on the viral-load scaling parameters (`vl_midpoint`, `vl_slope`) and generation-interval parameters (`gen_shape`, `gen_rate`) are placed directly on the natural (biological) scale. This is why the software disallows a `"lognormal"` option for the log-scale parameters: applied to a log-scale parameter it would be one-sided and would not represent a lognormal prior on the biological quantity.
 
 ---
 
@@ -682,4 +682,8 @@ stan_input <- prepare_stan_data(
 
 When `K_susc = 0` or `K_inf = 0`, the corresponding coefficient vectors do not enter the model. This means the same Stan model adapts automatically — no need to switch between different model files.
 
- 
+---
+
+## Acknowledgments
+
+This work was supported by a grant from the National Institutes of Health (R01AI137093). The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
