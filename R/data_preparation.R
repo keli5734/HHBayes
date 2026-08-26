@@ -357,7 +357,7 @@ prepare_stan_data <- function(df_clean,
       return(ifelse(t <= p$t_peak, p$Cpeak + p$r * (p$t_peak - t), p$Cpeak + p$d * (t - p$t_peak)))
     } else {
       val = 2 * 10^p$v_p / (exp(-p$lambda_g * (t - p$t_p)) + exp(p$lambda_d * (t - p$t_p)))
-      return(log10(val))
+      return(log10(pmax(val, 1)))
     }
   }
 
