@@ -6,7 +6,13 @@
 \usage{
 get_theoretical_ct(t, p)
 }
+\arguments{
+\item{t}{Days since infection.}
+
+\item{p}{List with \code{Cpeak, r, d, t_peak}.}
+}
 \description{
-Compute Theoretical Ct Trajectory (Piecewise Linear)
+Single source of truth for the Ct "tent" curve used by the simulator-matching
+imputation in \code{prepare_stan_data()} and by the Stage 1 kinetics model.
 }
 \keyword{internal}

@@ -4,14 +4,21 @@ export(calculate_sar_quick)
 export(calculate_sar_robust)
 export(fill_missing_viral_data)
 export(fit_household_model)
+export(fit_viral_kinetics)
+export(infectious_window_from_curve)
+export(kinetics_curve)
+export(kinetics_draw_to_timelines)
+export(kinetics_extract)
 export(plot_covariate_effects)
 export(plot_epidemic_curve)
 export(plot_household_timeline)
 export(plot_posterior_distributions)
+export(prepare_kinetics_data)
 export(prepare_stan_data)
 export(reconstruct_transmission_chains)
 export(simulate_multiple_households_comm)
 export(summarize_attack_rates)
+export(summarize_kinetics)
 import(Rcpp)
 import(deSolve)
 import(dplyr)
@@ -20,22 +27,28 @@ import(ggplot2)
 import(methods)
 import(rstan)
 import(rstantools)
-importFrom(dplyr,case_when)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,n)
-importFrom(dplyr,n_distinct)
-importFrom(dplyr,select)
-importFrom(dplyr,summarize)
-importFrom(rlang,":=")
-importFrom(rlang,abort)
-importFrom(rlang,inform)
-importFrom(rlang,warn)
+importFrom(dplyr,
+  case_when,
+  filter,
+  group_by,
+  left_join,
+  mutate,
+  n,
+  n_distinct,
+  select,
+  summarize
+)
+importFrom(rlang,
+  ":=",
+  abort,
+  inform,
+  warn
+)
 importFrom(rstan,sampling)
-importFrom(stats,median)
-importFrom(stats,rbinom)
-importFrom(stats,sd)
+importFrom(stats,
+  median,
+  rbinom,
+  sd
+)
 importFrom(utils,globalVariables)
 useDynLib(HHBayes, .registration = TRUE)

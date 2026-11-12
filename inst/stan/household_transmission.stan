@@ -1,108 +1,129 @@
-
 data {
-  int<lower=1> N; // Total number of people
+  int<lower=1> N; // Total number of people (units: person-episodes + never-infected people)
   int<lower=1> T; // Total days
   int<lower=1> H; // Total households
   int<lower=1> R; // Number of Roles (4: Adult, Infant, Toddler, Elderly)
-  real delta;     // Density scaling parameter (usually fixed or passed as data)
-
+  real delta; // Density scaling parameter (usually fixed or passed as data)
+  
   // --- FLAGS ---
-  int<lower=0, upper=1> use_vl_data;     // 1 = Use Viral Load, 0 = Use simple curve
-  int<lower=0, upper=1> vl_type;         // 1 = Log10, 0 = Ct
+  int<lower=0, upper=1> use_vl_data; // 1 = Use Viral Load, 0 = Use simple curve
+  int<lower=0, upper=1> vl_type; // 1 = Log10, 0 = Ct
   int<lower=0, upper=1> use_curve_logic; // 1 = Use Gamma Curve Fallback
-
+  
   // --- INDEXING ---
-  int<lower=1, upper=H> hh_id[N];   // Household ID for each person
-  int<lower=1, upper=R> role_id[N]; // Role ID for each person
-
+  array[N] int<lower=1, upper=H> hh_id; // Household ID for each person
+  array[N] int<lower=1, upper=R> role_id; // Role ID for each person
+  
   // --- OUTCOMES ---
-  int<lower=0, upper=1> I[N, T];        // 1 if infected on day t (Event)
-  int<lower=0, upper=1> Y[N, T];        // 1 if infectious on day t (State)
-  real V[N, T];                         // Viral Load value on day t
-  int<lower=1, upper=T> start_risk[N];  // Day when risk starts for person n
-
+  array[N, T] int<lower=0, upper=1> I; // 1 if infected on day t (Event)
+  array[N, T] int<lower=0, upper=1> Y; // 1 if infectious on day t (State)
+  array[N, T] real V; // Viral Load value on day t
+  
+  // --- AT-RISK WINDOW (per unit) ---
+  // A unit contributes to the likelihood only on days start_risk <= t <= end_risk
+  // (and up to its infection day if it was infected). This is what keeps person-time
+  // honest when follow-up is staggered:
+  //   * never infected  : at risk from its first to its LAST sample (not to day T);
+  //   * incident infection: at risk from first sample (or end of previous episode)
+  //     until the infection day;
+  //   * prevalent infection (infected before observation began): EMPTY window,
+  //     encoded as end_risk = start_risk - 1. The person still transmits (Y) but
+  //     is not counted as susceptible person-time.
+  // Setting end_risk = T for everyone reproduces the previous behaviour.
+  array[N] int<lower=1, upper=T> start_risk; // First day at risk
+  array[N] int<lower=0, upper=T> end_risk; // Last day at risk (0 = never at risk)
+  
   // --- HOUSEHOLD STRUCTURE ---
-  int<lower=1> hh_size_people[H];
-
+  array[H] int<lower=1> hh_size_people;
+  
   // --- SPARSE CONTACT MATRIX (The Speed Fix) ---
-  int<lower=0> n_contacts;                       // Total number of directed edges
-  int<lower=1, upper=N> contact_src[n_contacts]; // Infector ID (Source)
-  int<lower=1, upper=N> contact_tgt[n_contacts]; // Susceptible ID (Target)
-  real<lower=0> contact_w[n_contacts];           // Contact Weight (0 to 1)
-
+  int<lower=0> n_contacts; // Total number of directed edges
+  array[n_contacts] int<lower=1, upper=N> contact_src; // Infector ID (Source)
+  array[n_contacts] int<lower=1, upper=N> contact_tgt; // Susceptible ID (Target)
+  array[n_contacts] real<lower=0> contact_w; // Contact Weight (0 to 1)
+  
   // --- FORCING & REFERENCE ---
   matrix[T, R] seasonal_forcing_mat;
-  real<lower=0> reference_phi;   // Reference susceptibility (Adult=1.0)
+  real<lower=0> reference_phi; // Reference susceptibility (Adult=1.0)
   real<lower=0> reference_kappa; // Reference infectivity (Adult=1.0)
-
+  
   // --- COVARIATES ---
   int<lower=0> K_susc;
   matrix[N, K_susc] X_susc;
-
+  
   int<lower=0> K_inf;
   matrix[N, K_inf] X_inf;
-
+  
   // --- PRIORS (Flexible Distribution Types) ---
   // 1=Normal, 2=Uniform, 3=LogNormal
-  int<lower=0> prior_beta1_type; vector[2] prior_beta1_params;
-  int<lower=0> prior_beta2_type; vector[2] prior_beta2_params;
-  int<lower=0> prior_alpha_type; vector[2] prior_alpha_params;
-  int<lower=0> prior_cov_type;   vector[2] prior_cov_params;
-
+  int<lower=0> prior_beta1_type;
+  vector[2] prior_beta1_params;
+  int<lower=0> prior_beta2_type;
+  vector[2] prior_beta2_params;
+  int<lower=0> prior_alpha_type;
+  vector[2] prior_alpha_params;
+  int<lower=0> prior_cov_type;
+  vector[2] prior_cov_params;
+  
   // Viral Dynamics Priors
-  int<lower=0> prior_shape_type; vector[2] prior_shape_params;
-  int<lower=0> prior_rate_type;  vector[2] prior_rate_params;
-  int<lower=0> prior_vl_midpoint_type; vector[2] prior_vl_midpoint_params;
-  int<lower=0> prior_vl_slope_type; vector[2] prior_vl_slope_params;
-
-  int<lower=0> prior_phi_role_type;   vector[2] prior_phi_role_params;
-  int<lower=0> prior_kappa_role_type; vector[2] prior_kappa_role_params;
+  int<lower=0> prior_shape_type;
+  vector[2] prior_shape_params;
+  int<lower=0> prior_rate_type;
+  vector[2] prior_rate_params;
+  int<lower=0> prior_vl_midpoint_type;
+  vector[2] prior_vl_midpoint_params;
+  int<lower=0> prior_vl_slope_type;
+  vector[2] prior_vl_slope_params;
+  
+  int<lower=0> prior_phi_role_type;
+  vector[2] prior_phi_role_params;
+  int<lower=0> prior_kappa_role_type;
+  vector[2] prior_kappa_role_params;
 }
-
 transformed data {
-  // Pre-calculate the exact day of infection for efficiency
-  // 0 means "Never infected"
-  int infection_day[N];
-  for (n in 1:N) {
+  // Pre-calculate the exact day of infection for efficiency.
+  // 0 means "no infection EVENT inside this unit's at-risk window"
+  // (never infected, or infected before the window opened).
+  array[N] int infection_day;
+  for (n in 1 : N) {
     infection_day[n] = 0;
-    for (t in start_risk[n]:T) {
+    // If end_risk < start_risk the loop is empty (unit is not at risk).
+    for (t in start_risk[n] : end_risk[n]) {
       if (I[n, t] == 1) {
         infection_day[n] = t;
         break;
       }
     }
   }
-
+  
   // Which viral-component parameters actually enter the likelihood under the
   // current data configuration. Used below to decide which priors to apply.
   //   vl_midpoint / vl_slope  are ACTIVE  iff use_vl_data == 1
   //   gen_shape   / gen_rate  are ACTIVE  iff (use_vl_data == 0 && use_curve_logic == 1)
-  int vl_scaling_active = (use_vl_data == 1);
-  int gen_curve_active  = (use_vl_data == 0 && use_curve_logic == 1);
+  int vl_scaling_active = use_vl_data == 1;
+  int gen_curve_active = use_vl_data == 0 && use_curve_logic == 1;
 }
-
 parameters {
   // Role Effects (Relative to Reference)
-  vector[R-1] log_phi_by_role_raw;
-  vector[R-1] log_kappa_by_role_raw;
-
+  vector[R - 1] log_phi_by_role_raw;
+  vector[R - 1] log_kappa_by_role_raw;
+  
   // Transmission Parameters
   real log_beta1;
   real log_beta2;
   real log_alpha_comm;
-
+  
   // Viral Dynamics (For imputation fallback)
   real<lower=1.0, upper=20.0> gen_shape;
   real<lower=0.1, upper=5.0> gen_rate;
-
+  
   real<lower=0> vl_midpoint;
   real<lower=0> vl_slope;
-
+  
   // Covariate Effects
   vector[K_susc] beta_susc;
   vector[K_inf] beta_inf;
 }
-
 transformed parameters {
   // Expand parameters to natural scale
   vector<lower=0>[R] phi_by_role;
@@ -113,73 +134,111 @@ transformed parameters {
   real<lower=0> alpha_comm = exp(log_alpha_comm);
   real beta1 = exp(log_beta1);
   real beta2 = exp(log_beta2);
-
+  
   // 1. Construct Age-Specific Susceptibility (Phi)
   phi_by_role[1] = reference_phi;
-  for (r in 2:R) phi_by_role[r] = reference_phi * exp(log_phi_by_role_raw[r-1]);
-
+  for (r in 2 : R) {
+    phi_by_role[r] = reference_phi * exp(log_phi_by_role_raw[r - 1]);
+  }
+  
   // 2. Construct Age-Specific Infectivity (Kappa)
   kappa_by_role[1] = reference_kappa;
-  for (r in 2:R) kappa_by_role[r] = reference_kappa * exp(log_kappa_by_role_raw[r-1]);
-
+  for (r in 2 : R) {
+    kappa_by_role[r] = reference_kappa * exp(log_kappa_by_role_raw[r - 1]);
+  }
+  
   // 3. Pre-calculate Gamma Curve (only when it feeds the likelihood)
   //    Skipped entirely under viral-load or constant-infectiousness scenarios.
   if (gen_curve_active) {
     vector[T] raw_curve;
-    for(d in 1:T) raw_curve[d] = exp(gamma_lpdf(d | gen_shape, gen_rate));
+    for (d in 1 : T) {
+      raw_curve[d] = exp(gamma_lpdf(d | gen_shape, gen_rate));
+    }
     g_curve_est = raw_curve / sum(raw_curve);
   }
-
+  
   // 4. Pre-calculate Viral Term (V_term) for the whole matrix
   //    This avoids re-calculating power/logit functions inside the loop
   matrix[N, T] V_term_calc = rep_matrix(0.0, N, T);
   if (use_vl_data == 1) {
-    for (n in 1:N) {
-      for (t in 1:T) {
+    for (n in 1 : N) {
+      for (t in 1 : T) {
         if (Y[n, t] == 1) {
-           real val = V[n, t];
-           // Apply saturation logic (Ct vs Log10)
-           if (vl_type == 1) V_term_calc[n, t] = pow(fmax(0.0, val) / vl_midpoint, vl_slope);
-           else  V_term_calc[n, t] = inv_logit( (vl_midpoint - fmin(val, 45.0)) / vl_slope );
+          real val = V[n, t];
+          // Apply saturation logic (Ct vs Log10)
+          if (vl_type == 1) {
+            V_term_calc[n, t] = pow(fmax(0.0, val) / vl_midpoint, vl_slope);
+          } else {
+            V_term_calc[n, t] = inv_logit((vl_midpoint - fmin(val, 45.0))
+                                          / vl_slope);
+          }
         }
       }
     }
   }
 }
-
 model {
   // =========================================================
   // 1. PRIORS
   // =========================================================
-
-  if (prior_phi_role_type == 1)      log_phi_by_role_raw ~ normal(prior_phi_role_params[1], prior_phi_role_params[2]);
-  else if (prior_phi_role_type == 2) log_phi_by_role_raw ~ uniform(prior_phi_role_params[1], prior_phi_role_params[2]);
-  else if (prior_phi_role_type == 3) log_phi_by_role_raw ~ lognormal(prior_phi_role_params[1], prior_phi_role_params[2]);
-
-  if (prior_kappa_role_type == 1)      log_kappa_by_role_raw ~ normal(prior_kappa_role_params[1], prior_kappa_role_params[2]);
-  else if (prior_kappa_role_type == 2) log_kappa_by_role_raw ~ uniform(prior_kappa_role_params[1], prior_kappa_role_params[2]);
-  else if (prior_kappa_role_type == 3) log_kappa_by_role_raw ~ lognormal(prior_kappa_role_params[1], prior_kappa_role_params[2]);
-
+  
+  if (prior_phi_role_type == 1) {
+    log_phi_by_role_raw ~ normal(prior_phi_role_params[1],
+                                 prior_phi_role_params[2]);
+  } else if (prior_phi_role_type == 2) {
+    log_phi_by_role_raw ~ uniform(prior_phi_role_params[1],
+                                  prior_phi_role_params[2]);
+  } else if (prior_phi_role_type == 3) {
+    log_phi_by_role_raw ~ lognormal(prior_phi_role_params[1],
+                                    prior_phi_role_params[2]);
+  }
+  
+  if (prior_kappa_role_type == 1) {
+    log_kappa_by_role_raw ~ normal(prior_kappa_role_params[1],
+                                   prior_kappa_role_params[2]);
+  } else if (prior_kappa_role_type == 2) {
+    log_kappa_by_role_raw ~ uniform(prior_kappa_role_params[1],
+                                    prior_kappa_role_params[2]);
+  } else if (prior_kappa_role_type == 3) {
+    log_kappa_by_role_raw ~ lognormal(prior_kappa_role_params[1],
+                                      prior_kappa_role_params[2]);
+  }
+  
   // Transmission Priors
-  if (prior_beta1_type == 1) log_beta1 ~ normal(prior_beta1_params[1], prior_beta1_params[2]);
-  else if (prior_beta1_type == 2) log_beta1 ~ uniform(prior_beta1_params[1], prior_beta1_params[2]);
-
-  if (prior_beta2_type == 1) log_beta2 ~ normal(prior_beta2_params[1], prior_beta2_params[2]);
-  else if (prior_beta2_type == 2) log_beta2 ~ uniform(prior_beta2_params[1], prior_beta2_params[2]);
-
-  if (prior_alpha_type == 1) log_alpha_comm ~ normal(prior_alpha_params[1], prior_alpha_params[2]);
-  else if (prior_alpha_type == 2) log_alpha_comm ~ uniform(prior_alpha_params[1], prior_alpha_params[2]);
-
+  if (prior_beta1_type == 1) {
+    log_beta1 ~ normal(prior_beta1_params[1], prior_beta1_params[2]);
+  } else if (prior_beta1_type == 2) {
+    log_beta1 ~ uniform(prior_beta1_params[1], prior_beta1_params[2]);
+  }
+  
+  if (prior_beta2_type == 1) {
+    log_beta2 ~ normal(prior_beta2_params[1], prior_beta2_params[2]);
+  } else if (prior_beta2_type == 2) {
+    log_beta2 ~ uniform(prior_beta2_params[1], prior_beta2_params[2]);
+  }
+  
+  if (prior_alpha_type == 1) {
+    log_alpha_comm ~ normal(prior_alpha_params[1], prior_alpha_params[2]);
+  } else if (prior_alpha_type == 2) {
+    log_alpha_comm ~ uniform(prior_alpha_params[1], prior_alpha_params[2]);
+  }
+  
   // Covariate Priors
   if (K_susc > 0) {
-    if (prior_cov_type == 1) beta_susc ~ normal(prior_cov_params[1], prior_cov_params[2]);
-    else beta_susc ~ uniform(prior_cov_params[1], prior_cov_params[2]);
+    if (prior_cov_type == 1) {
+      beta_susc ~ normal(prior_cov_params[1], prior_cov_params[2]);
+    } else {
+      beta_susc ~ uniform(prior_cov_params[1], prior_cov_params[2]);
+    }
   }
   if (K_inf > 0) {
-    if (prior_cov_type == 1) beta_inf ~ normal(prior_cov_params[1], prior_cov_params[2]);
-    else beta_inf ~ uniform(prior_cov_params[1], prior_cov_params[2]);
+    if (prior_cov_type == 1) {
+      beta_inf ~ normal(prior_cov_params[1], prior_cov_params[2]);
+    } else {
+      beta_inf ~ uniform(prior_cov_params[1], prior_cov_params[2]);
+    }
   }
-
+  
   // ---------------------------------------------------------
   // Viral Dynamics Priors (GUARDED)
   //
@@ -191,113 +250,143 @@ model {
   // and, because it is excluded from the returned fit by fit_household_model(),
   // it will not appear in print(fit) or rstan::extract(fit).
   // ---------------------------------------------------------
-
+  
   // gen_shape / gen_rate : ACTIVE only under the Gamma generation-interval curve
   if (gen_curve_active) {
-    if (prior_shape_type == 1)      gen_shape ~ normal(prior_shape_params[1], prior_shape_params[2]);
-    else if (prior_shape_type == 2) gen_shape ~ uniform(prior_shape_params[1], prior_shape_params[2]);
-    else if (prior_shape_type == 3) gen_shape ~ lognormal(prior_shape_params[1], prior_shape_params[2]);
-
-    if (prior_rate_type == 1)      gen_rate ~ normal(prior_rate_params[1], prior_rate_params[2]);
-    else if (prior_rate_type == 2) gen_rate ~ uniform(prior_rate_params[1], prior_rate_params[2]);
-    else if (prior_rate_type == 3) gen_rate ~ lognormal(prior_rate_params[1], prior_rate_params[2]);
+    if (prior_shape_type == 1) {
+      gen_shape ~ normal(prior_shape_params[1], prior_shape_params[2]);
+    } else if (prior_shape_type == 2) {
+      gen_shape ~ uniform(prior_shape_params[1], prior_shape_params[2]);
+    } else if (prior_shape_type == 3) {
+      gen_shape ~ lognormal(prior_shape_params[1], prior_shape_params[2]);
+    }
+    
+    if (prior_rate_type == 1) {
+      gen_rate ~ normal(prior_rate_params[1], prior_rate_params[2]);
+    } else if (prior_rate_type == 2) {
+      gen_rate ~ uniform(prior_rate_params[1], prior_rate_params[2]);
+    } else if (prior_rate_type == 3) {
+      gen_rate ~ lognormal(prior_rate_params[1], prior_rate_params[2]);
+    }
   } else {
     // INERT: neutral pinning priors (within the declared [1,20] and [0.1,5] bounds)
     gen_shape ~ normal(3.0, 1.0);
-    gen_rate  ~ normal(0.5, 0.5);
+    gen_rate ~ normal(0.5, 0.5);
   }
-
+  
   // vl_midpoint / vl_slope : ACTIVE only when viral-load / Ct data are used
   if (vl_scaling_active) {
-    if (prior_vl_midpoint_type == 1)      vl_midpoint ~ normal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
-    else if (prior_vl_midpoint_type == 2) vl_midpoint ~ uniform(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
-    else if (prior_vl_midpoint_type == 3) vl_midpoint ~ lognormal(prior_vl_midpoint_params[1], prior_vl_midpoint_params[2]);
-
-    if (prior_vl_slope_type == 1)         vl_slope ~ normal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
-    else if (prior_vl_slope_type == 2)    vl_slope ~ uniform(prior_vl_slope_params[1], prior_vl_slope_params[2]);
-    else if (prior_vl_slope_type == 3)    vl_slope ~ lognormal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+    if (prior_vl_midpoint_type == 1) {
+      vl_midpoint ~ normal(prior_vl_midpoint_params[1],
+                           prior_vl_midpoint_params[2]);
+    } else if (prior_vl_midpoint_type == 2) {
+      vl_midpoint ~ uniform(prior_vl_midpoint_params[1],
+                            prior_vl_midpoint_params[2]);
+    } else if (prior_vl_midpoint_type == 3) {
+      vl_midpoint ~ lognormal(prior_vl_midpoint_params[1],
+                              prior_vl_midpoint_params[2]);
+    }
+    
+    if (prior_vl_slope_type == 1) {
+      vl_slope ~ normal(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+    } else if (prior_vl_slope_type == 2) {
+      vl_slope ~ uniform(prior_vl_slope_params[1], prior_vl_slope_params[2]);
+    } else if (prior_vl_slope_type == 3) {
+      vl_slope ~ lognormal(prior_vl_slope_params[1],
+                           prior_vl_slope_params[2]);
+    }
   } else {
     // INERT: neutral pinning priors (both declared real<lower=0>)
     vl_midpoint ~ normal(3.0, 1.0);
-    vl_slope    ~ normal(2.0, 1.0);
+    vl_slope ~ normal(2.0, 1.0);
   }
-
+  
   // =========================================================
   // 2. OPTIMIZED LIKELIHOOD (Vectorized Time Loop)
   // =========================================================
-
+  
   // A. Pre-calculate Static Multipliers for every person
   //    This moves math OUT of the daily loop (Huge Speedup)
   vector[N] susc_eff;
   vector[N] inf_eff;
   vector[N] density_eff;
-
-  for (n in 1:N) {
+  
+  for (n in 1 : N) {
     real log_susc = (K_susc > 0) ? dot_product(X_susc[n], beta_susc) : 0.0;
-    real log_inf  = (K_inf > 0)  ? dot_product(X_inf[n], beta_inf)  : 0.0;
-
+    real log_inf = (K_inf > 0) ? dot_product(X_inf[n], beta_inf) : 0.0;
+    
     susc_eff[n] = phi_by_role[role_id[n]] * exp(log_susc);
-    inf_eff[n]  = kappa_by_role[role_id[n]] * exp(log_inf);
+    inf_eff[n] = kappa_by_role[role_id[n]] * exp(log_inf);
     density_eff[n] = pow(1.0 / max(hh_size_people[hh_id[n]], 1), delta);
   }
-
+  
   // B. Iterate TIME
-  for (t in 1:T) {
-
+  for (t in 1 : T) {
     // --- Step 1: Calculate "Current Infectivity" for everyone ---
     //    We calculate how infectious every person is TODAY.
     //    This is 0 if they are not shedding (Y=0).
     vector[N] current_infectivity = rep_vector(0.0, N);
-
-    for (n in 1:N) {
-      if (Y[n, t] == 1) { // If infectious today
+    
+    for (n in 1 : N) {
+      if (Y[n, t] == 1) {
+        // If infectious today
         real v_comp = 1.0;
-
+        
         if (use_vl_data == 1) {
-           v_comp = V_term_calc[n, t]; // Lookup pre-calculated value
+          v_comp = V_term_calc[n, t]; // Lookup pre-calculated value
         } else {
-           // Empirical Curve Logic Fallback
-           int inf_day = infection_day[n];
-           if (inf_day != 0 && t >= inf_day) {
-             int dt = t - inf_day + 1;
-             if (use_curve_logic == 1 && dt <= T) v_comp = g_curve_est[dt];
-           }
+          // Empirical Curve Logic Fallback
+          // (uses the infection event inside the at-risk window; units infected
+          //  before observation began have infection_day = 0 and get v_comp = 1)
+          int inf_day = infection_day[n];
+          if (inf_day != 0 && t >= inf_day) {
+            int dt = t - inf_day + 1;
+            if (use_curve_logic == 1 && dt <= T) {
+              v_comp = g_curve_est[dt];
+            }
+          }
         }
-
+        
         // Formula: Density * Kappa * (Beta1 + Beta2 * V)
-        current_infectivity[n] = density_eff[n] * inf_eff[n] * (beta1 + beta2 * v_comp);
+        current_infectivity[n] = density_eff[n] * inf_eff[n]
+                                 * (beta1 + beta2 * v_comp);
       }
     }
-
+    
     // --- Step 2: Accumulate Force via Sparse Matrix ---
     //    Iterate through the Contact List (Edge List)
     //    Force on Target += Weight * Infectivity of Source
     vector[N] hh_force = rep_vector(0.0, N);
-
-    for (k in 1:n_contacts) {
+    
+    for (k in 1 : n_contacts) {
       // Direct array access is very fast in C++ (Stan)
-      hh_force[contact_tgt[k]] += contact_w[k] * current_infectivity[contact_src[k]];
+      hh_force[contact_tgt[k]] += contact_w[k]
+                                  * current_infectivity[contact_src[k]];
     }
-
+    
     // --- Step 3: Calculate Likelihood ---
-    for (n in 1:N) {
-      // Check if person is at risk today
-      // (Optimization: Stop calculating if they are already infected and we passed that day)
-      if (t >= start_risk[n]) {
-        int t_stop = (infection_day[n] == 0) ? T : infection_day[n];
-
+    for (n in 1 : N) {
+      // Is the unit inside its at-risk window today?
+      if (t >= start_risk[n] && t <= end_risk[n]) {
+        // Stop at the infection day if infected, otherwise at the end of the window.
+        int t_stop = (infection_day[n] == 0) ? end_risk[n] : infection_day[n];
+        
         if (t <= t_stop) {
           // Total Force = Susceptibility * (Community + Household)
-          real lambda = susc_eff[n] * (alpha_comm * seasonal_forcing_mat[t, role_id[n]] + hh_force[n]);
-
+          real lambda = susc_eff[n]
+                        * (alpha_comm * seasonal_forcing_mat[t, role_id[n]]
+                           + hh_force[n]);
+          
           // Numerical stability clamp
-          if (lambda > 20) lambda = 20;
-
+          if (lambda > 20) {
+            lambda = 20;
+          }
+          
           // Outcome: 1 if they got infected today, 0 otherwise
           int outcome = (t == infection_day[n]) ? 1 : 0;
-
+          
           // Bernoulli Likelihood: Prob of infection = 1 - exp(-lambda)
-          target += bernoulli_lpmf( outcome | 1.0 - exp(-lambda) );
+          target += bernoulli_lpmf(outcome | 1.0 - exp(-lambda));
         }
       }
     }

@@ -177,7 +177,9 @@ simulate_one_household_comm <- function(hh_id,
                                         susc_modifiers_vec = NULL,
                                         inf_modifiers_vec = NULL,
                                         covariate_data = NULL,
-                                        max_infections = Inf) {
+                                        max_infections = Inf,
+                                        infectious_period = "gamma",
+                                        max_shedding_days = 60) {
 
   n <- length(roles)
 
@@ -186,7 +188,9 @@ simulate_one_household_comm <- function(hh_id,
     return(list(
       hh_df = data.frame(
         hh_id = character(0), person_id = integer(0), role = character(0),
-        infection_time = as.Date(character(0)), infectious_end = as.Date(character(0)),
+        infection_time = as.Date(character(0)), infectious_start = as.Date(character(0)),
+        infected_by = integer(0), infected_by_episode = integer(0),
+        infectious_end = as.Date(character(0)),
         resolved_time = as.Date(character(0)), stringsAsFactors = FALSE
       ),
       diagnostic_df = data.frame(
@@ -199,7 +203,11 @@ simulate_one_household_comm <- function(hh_id,
 
 
   infection_history       <- vector("list", n)
+  infectious_start_history <- vector("list", n)  # first day contributing to the force of infection
   infectious_end_history <- vector("list", n)
+  traj_history           <- vector("list", n)  # viral trajectory of every episode (s = 0, 1, ...)
+  infector_history         <- vector("list", n)  # true source: person_id of the infector, 0 = community
+  infector_episode_history <- vector("list", n)  # which episode of the infector it was (NA = community)
   immunity_end_history   <- vector("list", n)
 
   infection_counts  <- integer(n)
@@ -208,6 +216,7 @@ simulate_one_household_comm <- function(hh_id,
 
   current_vl_traj   <- vector("list", n)
   current_inf_start <- rep(NA_integer_, n)
+  current_s_start   <- rep(NA_integer_, n)   # first infectious day, in days since infection
   detection_time    <- rep(NA_integer_, n)
 
   # Defaults
@@ -241,6 +250,7 @@ simulate_one_household_comm <- function(hh_id,
           immunity_end_history[[i]] <- c(immunity_end_history[[i]], t + dur)
           current_vl_traj[i] <- list(NULL)
           current_inf_start[i] <- NA
+          current_s_start[i] <- NA
         } else if(st == 2) { # R -> S
           current_status[i] <- 0
           time_next_state[i] <- NA
@@ -254,6 +264,7 @@ simulate_one_household_comm <- function(hh_id,
     # --- B. Calculate Force ---
     total_hh_force <- rep(0.0, n)
     infectors <- which(current_status == 1)
+    infectivity_values <- numeric(0)
 
     if(length(infectors) > 0) {
       infectivity_values <- numeric(length(infectors))
@@ -263,6 +274,12 @@ simulate_one_household_comm <- function(hh_id,
         val <- NA_real_
         traj <- current_vl_traj[[idx]]
         if(!is.null(traj) && rel_day >= 1 && rel_day <= length(traj)) val <- traj[rel_day]
+
+        if (infectious_period == "viral" &&
+            (is.na(current_s_start[idx]) || (rel_day - 1) < current_s_start[idx])) {
+          infectivity_values[k] <- 0   # infected but not yet detectable -> not infectious
+          next
+        }
 
         term1 <- beta1 * 1.0
         term2 <- 0.0
@@ -300,29 +317,80 @@ simulate_one_household_comm <- function(hh_id,
       infected_indices <- targets[is_infected]
 
       for(j in infected_indices) {
+        # --- true source of this infection ---------------------------------
+        # The hazard of j is phi_j * (community + sum over infectors of
+        # contact[j, src] * infectivity[src]); phi_j cancels, so the source is
+        # drawn with probability proportional to each term.
+        w_comm <- alpha_comm_val[match(j, targets)]
+        w_hh   <- if (length(infectors) > 0) infectivity_values * contact_mat[j, infectors] else numeric(0)
+        w_all  <- c(w_comm, w_hh)
+        pick   <- if (sum(w_all) > 0) sample.int(length(w_all), 1, prob = w_all) else 1L
+        if (pick == 1L) {
+          infector_history[[j]]         <- c(infector_history[[j]], 0L)
+          infector_episode_history[[j]] <- c(infector_episode_history[[j]], NA_integer_)
+        } else {
+          src <- infectors[pick - 1L]
+          infector_history[[j]]         <- c(infector_history[[j]], as.integer(src))
+          infector_episode_history[[j]] <- c(infector_episode_history[[j]], as.integer(infection_counts[src]))
+        }
+        # ------------------------------------------------------------------
         infection_history[[j]] <- c(infection_history[[j]], t)
         infection_counts[j] <- infection_counts[j] + 1
         current_status[j] <- 1
 
-        dur_I <- pmax(1, ceiling(stats::rgamma(1, shape = infectious_shape, scale = infectious_scale)))
+        if (infectious_period == "viral") {
+          # Infectious exactly while the viral load is detectable: the trajectory is
+          # computed over a long horizon, the person is infectious from the first to the
+          # last detectable day (never on the day of infection itself, s = 0), and
+          # recovers the day after the last detectable day.
+          s_seq <- 0:max_shedding_days
+          if (viral_testing == "viral load") {
+            if (model_type == "ODE") {
+              p_vec <- draw_random_ODE_params(roles[j], ODE_params_input)
+              traj_full <- solve_ode_trajectory(duration_days = max_shedding_days, params = p_vec)
+            } else {
+              p <- draw_random_VL_params(roles[j], VL_params_input)
+              traj_full <- simulate_viral_load_trajectory(s_seq, p$v_p, p$t_p, p$lambda_g, p$lambda_d)
+            }
+            detectable <- traj_full >= detect_threshold_log10
+          } else {
+            p <- draw_random_Ct_params(roles[j], Ct_params_input)
+            traj_full <- simulate_Ct_trajectory(s_seq, p$Cpeak, p$r, p$d, p$t_peak)
+            detectable <- traj_full <= detect_threshold_Ct
+          }
+          detectable[1] <- FALSE
+          if (any(detectable)) {
+            s_start <- min(which(detectable)) - 1L
+            s_end   <- max(which(detectable)) - 1L
+          } else {
+            s_start <- NA_integer_; s_end <- 0L      # never detectable: never infectious
+          }
+          dur_I <- s_end + 1L
+          traj  <- traj_full[seq_len(min(length(traj_full), dur_I + 1L))]
+        } else {
+          dur_I <- pmax(1, ceiling(stats::rgamma(1, shape = infectious_shape, scale = infectious_scale)))
+          s_start <- 1L
+          t_seq <- 0:dur_I
+          if (viral_testing == "viral load") {
+            if (model_type == "ODE") {
+              p_vec <- draw_random_ODE_params(roles[j], ODE_params_input)
+              traj <- solve_ode_trajectory(duration_days = dur_I + 2, params = p_vec)
+              if(length(traj) > dur_I) traj <- traj[1:dur_I]
+            } else {
+              p <- draw_random_VL_params(roles[j], VL_params_input)
+              traj <- simulate_viral_load_trajectory(t_seq, p$v_p, p$t_p, p$lambda_g, p$lambda_d)
+            }
+          } else {
+            p <- draw_random_Ct_params(roles[j], Ct_params_input)
+            traj <- simulate_Ct_trajectory(t_seq, p$Cpeak, p$r, p$d, p$t_peak)
+          }
+        }
         time_next_state[j] <- t + dur_I
         current_inf_start[j] <- t
-
-        t_seq <- 0:dur_I
-
-        if (viral_testing == "viral load") {
-          if (model_type == "ODE") {
-            p_vec <- draw_random_ODE_params(roles[j], ODE_params_input)
-            traj <- solve_ode_trajectory(duration_days = dur_I + 2, params = p_vec)
-            if(length(traj) > dur_I) traj <- traj[1:dur_I]
-          } else {
-            p <- draw_random_VL_params(roles[j], VL_params_input)
-            traj <- simulate_viral_load_trajectory(t_seq, p$v_p, p$t_p, p$lambda_g, p$lambda_d)
-          }
-        } else {
-          p <- draw_random_Ct_params(roles[j], Ct_params_input)
-          traj <- simulate_Ct_trajectory(t_seq, p$Cpeak, p$r, p$d, p$t_peak)
-        }
+        current_s_start[j] <- s_start
+        infectious_start_history[[j]] <- c(infectious_start_history[[j]],
+                                           if (is.na(s_start)) NA_integer_ else t + s_start)
+        traj_history[[j]] <- c(traj_history[[j]], list(traj))
         current_vl_traj[[j]] <- traj
       }
     }
@@ -338,6 +406,7 @@ simulate_one_household_comm <- function(hh_id,
           is_pos <- FALSE
           if(viral_testing == "viral load") { if(val >= detect_threshold_log10) is_pos <- TRUE }
           else { if(val <= detect_threshold_Ct) is_pos <- TRUE }
+          if (infectious_period == "viral" && rel_day == 1) is_pos <- FALSE
           if(is_pos && is.na(detection_time[i])) {
             detection_time[i] <- t; household_detected <- TRUE
           }
@@ -361,12 +430,18 @@ simulate_one_household_comm <- function(hh_id,
     }
 
     if(is.null(hist)) {
-      base_row$infection_time <- NA; base_row$infectious_end <- NA; base_row$resolved_time <- NA
+      base_row$infection_time <- NA; base_row$infectious_start <- NA
+      base_row$infected_by <- NA; base_row$infected_by_episode <- NA
+      base_row$infectious_end <- NA; base_row$resolved_time <- NA
       hh_rows[[length(hh_rows)+1]] <- base_row
     } else {
       for(k in seq_along(hist)) {
         row <- base_row
         row$infection_time <- hist[k]
+        row$infectious_start <- if(k <= length(infectious_start_history[[i]])) infectious_start_history[[i]][k] else NA
+        src_k <- if (k <= length(infector_history[[i]])) infector_history[[i]][k] else NA
+        row$infected_by <- if (is.na(src_k) || src_k == 0L) NA_integer_ else src_k   # person_id in the same household
+        row$infected_by_episode <- if (k <= length(infector_episode_history[[i]])) infector_episode_history[[i]][k] else NA
         row$infectious_end <- if(k <= length(infectious_end_history[[i]])) infectious_end_history[[i]][k] else NA
         row$resolved_time  <- if(k <= length(immunity_end_history[[i]])) immunity_end_history[[i]][k] else NA
         hh_rows[[length(hh_rows)+1]] <- row
@@ -394,26 +469,18 @@ simulate_one_household_comm <- function(hh_id,
         relevant_indices <- which(test_days >= inf_t & test_days <= inf_end)
 
         if(length(relevant_indices) > 0) {
-          d_vals <- test_days[relevant_indices]; rel_vals <- d_vals - inf_t + 1
-
-          if(viral_testing == "viral load") {
-            if(model_type == "ODE") {
-              p_vec <- draw_random_ODE_params(roles[i], ODE_params_input)
-              max_rel <- max(rel_vals)
-              traj <- solve_ode_trajectory(max_rel + 2, p_vec)
-              valid_rel <- rel_vals[rel_vals <= length(traj)]
-              valid_idx <- relevant_indices[rel_vals <= length(traj)]
-              v_vals <- traj[valid_rel]
-              res_matrix[i, valid_idx] <- pmax(res_matrix[i, valid_idx], v_vals)
+          s_vals <- test_days[relevant_indices] - inf_t          # days since infection
+          traj_k <- traj_history[[i]][[k]]
+          ok <- (s_vals + 1) <= length(traj_k)
+          if (infectious_period == "viral") ok <- ok & s_vals >= 1   # never positive on the day of infection
+          if (any(ok)) {
+            vals_k <- traj_k[s_vals[ok] + 1]
+            idx_k  <- relevant_indices[ok]
+            if (viral_testing == "viral load") {
+              res_matrix[i, idx_k] <- pmax(res_matrix[i, idx_k], vals_k)
             } else {
-              p <- draw_random_VL_params(roles[i], VL_params_input)
-              v_vals <- simulate_viral_load_trajectory(rel_vals, p$v_p, p$t_p, p$lambda_g, p$lambda_d)
-              res_matrix[i, relevant_indices] <- pmax(res_matrix[i, relevant_indices], v_vals)
+              res_matrix[i, idx_k] <- pmin(res_matrix[i, idx_k], vals_k)
             }
-          } else {
-            p <- draw_random_Ct_params(roles[i], Ct_params_input)
-            ct_vals <- simulate_Ct_trajectory(rel_vals, p$Cpeak, p$r, p$d, p$t_peak)
-            res_matrix[i, relevant_indices] <- pmin(res_matrix[i, relevant_indices], ct_vals)
           }
         }
         if(length(relevant_indices) > 0) ep_matrix[i, relevant_indices] <- k
@@ -465,7 +532,7 @@ simulate_one_household_comm <- function(hh_id,
 #' @param verbose Logical. Print progress messages. Defaults to FALSE.
 #' @param seasonal_forcing_list List of numeric vectors for seasonal forcing by role. NULL for none.
 #' @param detect_threshold_log10 Numeric. Detection threshold on log10 viral load scale. Defaults to 1e-6.
-#' @param detect_threshold_Ct Numeric. Detection threshold on Ct scale. Defaults to 99.
+#' @param detect_threshold_Ct Numeric. Detection threshold on Ct scale. Defaults to 40.
 #' @param surveillance_interval Integer. Days between surveillance tests. Defaults to 1.
 #' @param test_daily Logical. Whether to test daily. Defaults to FALSE.
 #' @param viral_testing Character. Type of viral testing: "viral load" or "Ct". Defaults to "viral load".
@@ -487,8 +554,23 @@ simulate_one_household_comm <- function(hh_id,
 #' @param covariates_config List defining covariate configurations. NULL for none.
 #' @param seed Integer. Random seed. NULL for no seed.
 #' @param max_infections Numeric. Maximum infections per person. Defaults to Inf.
+#' @param infectious_period How the infectious period is generated. \code{"gamma"} (default,
+#'   original behaviour): Gamma(\code{infectious_shape}, \code{infectious_scale}) days, infectious
+#'   (through \code{beta1}) from the day after infection, and the viral trajectory is cut at the end
+#'   of that period. \code{"viral"}: infectious exactly while the viral load is detectable
+#'   (log10 VL >= \code{detect_threshold_log10}, or Ct <= \code{detect_threshold_Ct}), from at least
+#'   one day after infection until the trajectory falls below detection; both \code{beta1} and
+#'   \code{beta2} act only on those days and \code{infectious_shape}/\code{infectious_scale} are
+#'   ignored. Use \code{"viral"} to generate data that match the assumptions of the two-stage
+#'   estimator (Stage 1 kinetics + \code{episode_timelines}).
+#' @param max_shedding_days Horizon (days) over which the trajectory is evaluated when
+#'   \code{infectious_period = "viral"}.
 #'
-#' @return A list with two elements: hh_df (household-level results) and diagnostic_df (testing results).
+#' @return A list with two elements: hh_df (household-level results; \code{infection_time},
+#'   \code{infectious_start}, \code{infectious_end} and \code{resolved_time} are integer study-day
+#'   indices, \code{infectious_end} being the first non-infectious day; \code{infected_by} is the
+#'   person_id of the true infector in the same household, or NA for community infection, and
+#'   \code{infected_by_episode} that infector's episode number) and diagnostic_df (testing results).
 #' @export
 simulate_multiple_households_comm <- function(n_households = 50,
                                               surveillance_df = NULL,
@@ -524,7 +606,11 @@ simulate_multiple_households_comm <- function(n_households = 50,
                                               ODE_params_list = NULL,
                                               covariates_config = NULL,
                                               seed = NULL,
-                                              max_infections = Inf) {
+                                              max_infections = Inf,
+                                              infectious_period = c("gamma", "viral"),
+                                              max_shedding_days = 60) {
+
+  infectious_period <- match.arg(infectious_period)
 
   if (!is.null(seed)) {
     set.seed(seed)
@@ -625,7 +711,9 @@ simulate_multiple_households_comm <- function(n_households = 50,
                                       susc_modifiers_vec = hh_susc_modifiers,
                                       inf_modifiers_vec  = hh_inf_modifiers,
                                       covariate_data = hh_covariates,
-                                      max_infections = max_infections)
+                                      max_infections = max_infections,
+                                      infectious_period = infectious_period,
+                                      max_shedding_days = max_shedding_days)
     households[[h]] <- hh
   }
 

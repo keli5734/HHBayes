@@ -6,7 +6,16 @@
 \usage{
 get_theoretical_vl(t, p)
 }
+\arguments{
+\item{t}{Days since infection.}
+
+\item{p}{List with \code{v_p, t_p, lambda_g, lambda_d}.}
+}
 \description{
-Compute Theoretical Log10 Viral Load Trajectory (Double Exponential)
+The value is floored at log10(1) = 0, exactly like the simulator (which uses
+\code{max(0, val)} when computing infectivity and a 0 baseline in the recorded
+samples) and the Stan model (\code{fmax(0, V)}). Using the same floor in the
+imputation avoids a silent simulator/estimator mismatch at the edges of the
+shedding period.
 }
 \keyword{internal}

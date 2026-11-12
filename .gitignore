@@ -8,3 +8,8 @@ inst/doc
 docs
 /doc/
 /Meta/
+
+# compiled objects (rebuilt on install)
+src/*.o
+src/*.so
+src/*.dll

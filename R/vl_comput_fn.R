@@ -1,22 +1,31 @@
 #' Compute Theoretical Ct Trajectory (Piecewise Linear)
+#'
+#' Single source of truth for the Ct "tent" curve used by the simulator-matching
+#' imputation in \code{prepare_stan_data()} and by the Stage 1 kinetics model.
+#' @param t Days since infection.
+#' @param p List with \code{Cpeak, r, d, t_peak}.
 #' @keywords internal
 get_theoretical_ct <- function(t, p) {
-  # t = days since infection
-  # p = list(Cpeak, r, d, t_peak)
   ifelse(t <= p$t_peak,
          p$Cpeak + p$r * (p$t_peak - t),
          p$Cpeak + p$d * (t - p$t_peak))
 }
 
 #' Compute Theoretical Log10 Viral Load Trajectory (Double Exponential)
+#'
+#' The value is floored at log10(1) = 0, exactly like the simulator (which uses
+#' \code{max(0, val)} when computing infectivity and a 0 baseline in the recorded
+#' samples) and the Stan model (\code{fmax(0, V)}). Using the same floor in the
+#' imputation avoids a silent simulator/estimator mismatch at the edges of the
+#' shedding period.
+#' @param t Days since infection.
+#' @param p List with \code{v_p, t_p, lambda_g, lambda_d}.
 #' @keywords internal
 get_theoretical_vl <- function(t, p) {
-  # t = days since infection
-  # p = list(v_p, t_p, lambda_g, lambda_d)
-  numerator <- 2 * 10^(p$v_p)
+  numerator   <- 2 * 10^(p$v_p)
   denominator <- exp(-p$lambda_g * (t - p$t_p)) + exp(p$lambda_d * (t - p$t_p))
   vt <- numerator / denominator
-  return(log10(pmax(1e-9, vt)))
+  log10(pmax(1, vt))
 }
 
 #' Fill Missing Viral Data (Ct or Log10) based on Episode Start

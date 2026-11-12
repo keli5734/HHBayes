@@ -13,5 +13,8 @@ utils::globalVariables(c(
   "role", "role_group", "role_id", "role_name", "source_int", "source_role",
   "source_x", "source_y", "start_risk_date", "target", "target_x", "target_y",
   "test_result", "total", "type", "val", "valid", "value", "x1", "x2",
-  "y1", "y2", "y_plot"
+  "y1", "y2", "y_plot",
+  # added with the Stage 1 / at-risk-window update
+  "first_obs_date", "last_obs_date", "prev_resolved_final", "start_idx_raw",
+  "end_idx_raw", "inf_idx_raw", "i_idx"
 ))

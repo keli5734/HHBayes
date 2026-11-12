@@ -32,6 +32,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Ke Li \email{ke.li.kl662@yale.edu}
   \item Yiren Hou \email{yiren.hou@yale.edu}
 }
 

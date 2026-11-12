@@ -6,3 +6,13 @@
 #' of Health.
 #' @keywords internal
 "_PACKAGE"
+
+# Package-level imports. Kept HERE (not in R/stanmodels.R) because
+# rstantools::rstan_config() regenerates stanmodels.R; without useDynLib the
+# compiled Stan models are never loaded ("no such symbol _rcpp_module_boot_...").
+#' @useDynLib HHBayes, .registration = TRUE
+#' @import methods
+#' @import Rcpp
+#' @import rstantools
+#' @importFrom rstan sampling
+NULL

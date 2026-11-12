@@ -35,14 +35,21 @@ fit_household_model <- function(stan_data,
 
   # ---------------------------------------------------------------------------
   # 0. Separate non-Stan metadata from the data list.
-  #    `inert_pars` is bookkeeping used here; it is NOT declared in the Stan
-  #    `data` block, so it must be stripped before the data list is passed on.
+  #    `inert_pars` and `units` are bookkeeping, NOT declared in the Stan `data`
+  #    block, so they are stripped before the data list is passed on.
   # ---------------------------------------------------------------------------
   inert_pars <- stan_data$inert_pars
   stan_data$inert_pars <- NULL
+  stan_data$units      <- NULL
 
-  # Backward compatibility: if an older prepare_stan_data() did not attach
-  # $inert_pars, derive the inert set from the configuration flags.
+  # Backward compatibility: stan_data built before the at-risk-window update has no
+  # `end_risk`; everyone is then at risk through the last day, as before.
+  if (is.null(stan_data$end_risk)) {
+    stan_data$end_risk <- rep(as.integer(stan_data$T), stan_data$N)
+  }
+
+  # Backward compatibility: derive the inert set from the configuration flags if an
+  # older prepare_stan_data() did not attach $inert_pars.
   #   use_vl_data == 1                        -> gen_shape / gen_rate inert
   #   use_vl_data == 0 & use_curve_logic == 1 -> vl_midpoint / vl_slope inert
   #   use_vl_data == 0 & use_curve_logic == 0 -> all four inert (constant infectiousness)
@@ -122,7 +129,6 @@ fit_household_model <- function(stan_data,
   if (isTRUE(drop_inert) && !any(c("pars", "include") %in% names(dots))) {
     call_args$pars <- unique(c(
       inert_pars,
-      # internal bookkeeping the README already strips manually:
       "log_phi_by_role_raw", "log_kappa_by_role_raw",
       "log_beta1", "log_beta2", "log_alpha_comm",
       "g_curve_est", "V_term_calc"
@@ -135,10 +141,6 @@ fit_household_model <- function(stan_data,
 
   # ---------------------------------------------------------------------------
   # 3. Run the sampler.
-  #    We use the pre-compiled 'stanmodels$household_transmission' object built
-  #    by the package; we do NOT refer to the .stan file path directly.
   # ---------------------------------------------------------------------------
-  out <- do.call(rstan::sampling, call_args)
-
-  return(out)
+  do.call(rstan::sampling, call_args)
 }

@@ -42,7 +42,9 @@ simulate_multiple_households_comm(
   ODE_params_list = NULL,
   covariates_config = NULL,
   seed = NULL,
-  max_infections = Inf
+  max_infections = Inf,
+  infectious_period = c("gamma", "viral"),
+  max_shedding_days = 60
 )
 }
 \arguments{
@@ -84,7 +86,7 @@ simulate_multiple_households_comm(
 
 \item{detect_threshold_log10}{Numeric. Detection threshold on log10 viral load scale. Defaults to 1e-6.}
 
-\item{detect_threshold_Ct}{Numeric. Detection threshold on Ct scale. Defaults to 99.}
+\item{detect_threshold_Ct}{Numeric. Detection threshold on Ct scale. Defaults to 40.}
 
 \item{surveillance_interval}{Integer. Days between surveillance tests. Defaults to 1.}
 
@@ -124,9 +126,26 @@ Use dimnames(role_mixing_matrix) <- list(role_levels, role_levels). NULL for def
 \item{seed}{Integer. Random seed. NULL for no seed.}
 
 \item{max_infections}{Numeric. Maximum infections per person. Defaults to Inf.}
+
+\item{infectious_period}{How the infectious period is generated. \code{"gamma"} (default,
+original behaviour): Gamma(\code{infectious_shape}, \code{infectious_scale}) days, infectious
+(through \code{beta1}) from the day after infection, and the viral trajectory is cut at the end
+of that period. \code{"viral"}: infectious exactly while the viral load is detectable
+(log10 VL >= \code{detect_threshold_log10}, or Ct <= \code{detect_threshold_Ct}), from at least
+one day after infection until the trajectory falls below detection; both \code{beta1} and
+\code{beta2} act only on those days and \code{infectious_shape}/\code{infectious_scale} are
+ignored. Use \code{"viral"} to generate data that match the assumptions of the two-stage
+estimator (Stage 1 kinetics + \code{episode_timelines}).}
+
+\item{max_shedding_days}{Horizon (days) over which the trajectory is evaluated when
+\code{infectious_period = "viral"}.}
 }
 \value{
-A list with two elements: hh_df (household-level results) and diagnostic_df (testing results).
+A list with two elements: hh_df (household-level results; \code{infection_time},
+\code{infectious_start}, \code{infectious_end} and \code{resolved_time} are integer study-day
+indices, \code{infectious_end} being the first non-infectious day; \code{infected_by} is the
+person_id of the true infector in the same household, or NA for community infection, and
+\code{infected_by_episode} that infector's episode number) and diagnostic_df (testing results).
 }
 \description{
 Simulates infection dynamics across multiple households with community forcing.

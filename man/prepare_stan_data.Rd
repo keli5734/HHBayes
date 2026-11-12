@@ -22,6 +22,10 @@ prepare_stan_data(
   recovery_params = NULL,
   imputation_params = NULL,
   priors = list(),
+  viral_scale = c("auto", "log10", "Ct"),
+  episode_timelines = NULL,
+  episode_curves = NULL,
+  risk_window = c("observed", "study"),
   seed = 123
 )
 }
@@ -36,7 +40,7 @@ prepare_stan_data(
 
 \item{study_end_date}{Date. End date of the study period. Defaults to 2025-07-01.}
 
-\item{seasonal_forcing_list}{List of numeric vectors (one per role) for seasonal forcing. NULL for no forcing.}
+\item{seasonal_forcing_list}{List of numeric vectors (one per role, length = study days) for seasonal forcing. NULL for no forcing.}
 
 \item{use_vl_data}{Logical. Whether to include viral load data. Defaults to TRUE.}
 
@@ -60,15 +64,58 @@ Should match the value used in simulation. Defaults to 0 (no scaling).}
 
 \item{recovery_params}{List of Gamma parameters (shape, scale) for the immunity tail by role.}
 
-\item{imputation_params}{List of parameters for mechanistic viral curves (Cpeak, r, d, t_peak) by role.}
+\item{imputation_params}{List of parameters for mechanistic viral curves by role (used when no
+Stage 1 curve is available): Ct needs \code{Cpeak, r, d, t_peak}; log10 viral load needs
+\code{v_p, t_p, lambda_g, lambda_d}.}
 
 \item{priors}{List of flexible priors (dist, params).}
+
+\item{viral_scale}{"auto", "log10" or "Ct". The scale of the viral measurements. "auto"
+guesses from the data (largest value above 15 means Ct); set it explicitly when known.}
+
+\item{episode_timelines}{Optional data frame with one row per episode:
+\code{participantid}, \code{episode_id}, \code{date_infection}, and optionally
+\code{date_infectious_start}, \code{date_infectious_end} (see
+\code{kinetics_draw_to_timelines()}). Episodes missing from the table fall back to the
+random imputation (with a message).}
+
+\item{episode_curves}{Optional long data frame (\code{participantid}, \code{episode_id},
+\code{date}, \code{value}) with the expected viral value on each infectious day, from the
+same Stage 1 draw. Observed values still overwrite the curve on tested days.}
+
+\item{risk_window}{"observed" (default) or "study"; see the section on at-risk windows.}
 
 \item{seed}{Integer. Random seed for reproducibility. Defaults to 123.}
 }
 \value{
-A named list formatted for input to the Stan model.
+A named list formatted for input to the Stan model. Besides the Stan data it carries
+\code{inert_pars} and a \code{units} data frame (one row per unit with its dates and
+at-risk window) for diagnostics; both are dropped by \code{fit_household_model()}.
 }
 \description{
-Prepare Data for Stan Model
+Builds the data list for the household transmission model. Infection and
+infectious-period timing can come from two sources:
+\itemize{
+\item \strong{Random imputation} (default, \code{episode_timelines = NULL}): the infection
+day is drawn uniformly between the last negative and the first positive sample and the
+end of infectiousness between the last positive and the next negative.
+\item \strong{Stage 1 draw} (\code{episode_timelines} supplied): timing comes from a posterior
+draw of the viral kinetics model (see \code{prepare_kinetics_data()},
+\code{fit_viral_kinetics()} and \code{kinetics_draw_to_timelines()}), so the negatives
+before the first and after the last positive inform onset directly. Fit the transmission
+model once per draw and pool the posterior draws to propagate Stage 1 uncertainty.
 }
+In both cases \code{recovery_params} still adds the post-infectious immunity tail that
+determines when a person is at risk again.
+}
+\section{At-risk windows}{
+
+With \code{risk_window = "observed"} (default) a person is at risk from their first sample
+(or the day after the previous episode's resolution) until the infection day, or until their
+\emph{last} sample if never infected. Days outside observation are not counted as
+susceptible person-time. Infections dated before observation began (prevalent infections)
+still transmit but contribute no at-risk time. Reinfections cannot precede the resolution of
+the previous episode. \code{risk_window = "study"} reproduces the old behaviour (everyone at
+risk over the whole study window).
+}
+

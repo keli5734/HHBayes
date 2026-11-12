@@ -17,7 +17,6 @@ Description: Provides a streamlined pipeline to simulate household infection
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Funding: This work was supported by a grant from the National Institutes of 
     Health (R01AI137093). The content is solely the responsibility of the 
     authors and does not necessarily represent the official views of the 
@@ -53,3 +52,4 @@ Suggests:
 VignetteBuilder: knitr
 URL: https://github.com/keli5734/HHBayes
 BugReports: https://github.com/keli5734/HHBayes/issues
+Config/roxygen2/version: 8.1.0

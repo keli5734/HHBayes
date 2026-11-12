@@ -123,14 +123,18 @@ plot_covariate_effects <- function(fit, stan_data) {
 
   if (!is.null(fit)) {
     post <- rstan::extract(fit)
+    # Parameters that are inert under the data configuration (e.g. gen_shape /
+    # gen_rate when viral-load data are used) are dropped from the fit by
+    # fit_household_model(); return NA for them instead of failing.
+    med <- function(x) if (is.null(x)) NA_real_ else median(x)
     list(
-      beta1       = median(post$beta1),
-      beta2       = median(post$beta2),
-      alpha_comm  = median(post$alpha_comm),
-      gen_shape   = median(post$gen_shape),
-      gen_rate    = median(post$gen_rate),
-      vl_midpoint = median(post$vl_midpoint),
-      vl_slope    = median(post$vl_slope),
+      beta1       = med(post$beta1),
+      beta2       = med(post$beta2),
+      alpha_comm  = med(post$alpha_comm),
+      gen_shape   = med(post$gen_shape),
+      gen_rate    = med(post$gen_rate),
+      vl_midpoint = med(post$vl_midpoint),
+      vl_slope    = med(post$vl_slope),
       phi         = apply(post$phi_by_role,   2, median),
       kappa       = apply(post$kappa_by_role, 2, median),
       beta_susc   = if (!is.null(post$beta_susc))
@@ -216,10 +220,12 @@ reconstruct_transmission_chains <- function(fit = NULL,
     if(length(idx) > 0) infection_day[n] <- idx[1] + stan_data$start_risk[n] - 1
   }
 
-  # Pre-calculate Gamma Curve
+  # Pre-calculate Gamma Curve (only used without viral-load data, with the curve logic)
   g_curve <- numeric(T_max)
-  for(d in 1:T_max) g_curve[d] <- stats::dgamma(d, shape = p_gen_shape, rate = p_gen_rate)
-  g_curve <- g_curve / sum(g_curve)
+  if (stan_data$use_vl_data == 0 && stan_data$use_curve_logic == 1) {
+    for(d in 1:T_max) g_curve[d] <- stats::dgamma(d, shape = p_gen_shape, rate = p_gen_rate)
+    g_curve <- g_curve / sum(g_curve)
+  }
 
   # 3. Iterate through Infections
   results_list <- list()
