@@ -98,7 +98,15 @@
 #' @param covariates_susceptibility Vector of column names to use as covariates for susceptibility.
 #' @param covariates_infectivity Vector of column names to use as covariates for infectivity.
 #' @param priors List of flexible priors (dist, params).
-#' @param recovery_params List of Gamma parameters (shape, scale) for the immunity tail by role.
+#' @param recovery_params List of Gamma parameters (shape, scale) for the immunity tail by role. A person is
+#'   not at risk between an infection and the end of this tail; it should reflect how long protection really
+#'   lasts, because (with \code{post_episode_risk = TRUE}) it also decides how much follow-up after the last
+#'   infection counts as time at risk.
+#' @param post_episode_risk Logical. If \code{TRUE} (default), a person who has had an infection episode
+#'   contributes one more at-risk unit, with no infection, from the end of their immunity tail to their last
+#'   sample (they are susceptible again once protection has waned). If \code{FALSE}, follow-up after a
+#'   person's last episode is ignored, as in earlier versions; this overstates transmission rates by the
+#'   share of person-time omitted, which is large when protection is short.
 #' @param imputation_params List of parameters for mechanistic viral curves by role (used when no
 #'   Stage 1 curve is available): Ct needs \code{Cpeak, r, d, t_peak}; log10 viral load needs
 #'   \code{v_p, t_p, lambda_g, lambda_d}.
@@ -149,11 +157,12 @@ prepare_stan_data <- function(df_clean,
                               imputation_params = NULL,
                               priors = list(),
 
-                              # --- NEW: viral scale, Stage 1 timing, at-risk windows ---
+
                               viral_scale = c("auto", "log10", "Ct"),
                               episode_timelines = NULL,
                               episode_curves = NULL,
                               risk_window = c("observed", "study"),
+                              post_episode_risk = TRUE,
 
                               seed = 123) {
 
@@ -423,6 +432,21 @@ prepare_stan_data <- function(df_clean,
 
   df_model_full <- df_meta_all %>%
     dplyr::left_join(df_imputed, by = "participantid")
+  df_model_full$is_tail <- FALSE
+
+  # Post-episode follow-up: once the immunity tail after a person's LAST episode has ended they are
+  # susceptible again and contribute at-risk time (no event, no infectiousness) up to their last sample.
+  # Without this unit, those quiet days would be dropped while the infections are kept, which biases the
+  # transmission rates upwards.
+  if (isTRUE(post_episode_risk)) {
+    with_episode <- unique(df_model_full$participantid[!is.na(df_model_full$episode_id)])
+    if (length(with_episode) > 0) {
+      tail_rows <- df_meta_all[df_meta_all$participantid %in% with_episode, , drop = FALSE] %>%
+        dplyr::left_join(df_imputed[0, , drop = FALSE], by = "participantid")   # episode columns = NA
+      tail_rows$is_tail <- TRUE
+      df_model_full <- dplyr::bind_rows(df_model_full, tail_rows)
+    }
+  }
 
   # =========================================================
   # STRICT SORTING & RISK WINDOW CALCULATION
@@ -432,7 +456,7 @@ prepare_stan_data <- function(df_clean,
       hh_sort_num = suppressWarnings(as.numeric(gsub("\\D", "", hh_id))),
       p_sort_num  = suppressWarnings(as.numeric(gsub("\\D", "", person_id)))
     ) %>%
-    dplyr::arrange(hh_sort_num, hh_id, p_sort_num, person_id, date_infection) %>%
+    dplyr::arrange(hh_sort_num, hh_id, p_sort_num, person_id, is_tail, date_infection) %>%
     dplyr::group_by(participantid) %>%
     dplyr::mutate(
       # the first unit of a person opens at the first sample; later ones one day after
@@ -440,11 +464,14 @@ prepare_stan_data <- function(df_clean,
       prev_resolved_final = dplyr::lag(date_resolved_final,
                                        default = dplyr::first(first_obs_date) - 1),
       start_risk_date = dplyr::case_when(
+        is_tail ~ prev_resolved_final + 1,            # after the last episode's immunity tail
         is.na(episode_id) ~ first_obs_date,
         TRUE ~ prev_resolved_final + 1
       )
     ) %>%
     dplyr::ungroup() %>%
+    # a tail unit whose window would open after the last sample (still immune, or no follow-up left) is dropped
+    dplyr::filter(!(is_tail & (is.na(start_risk_date) | start_risk_date > last_obs_date))) %>%
     dplyr::arrange(hh_sort_num, hh_id, p_sort_num, person_id, start_risk_date) %>%
     dplyr::mutate(
       start_idx_raw = as.integer(start_risk_date - study_start_date) + 1L,
@@ -719,6 +746,7 @@ prepare_stan_data <- function(df_clean,
     date_resolved_final = df_model_full$date_resolved_final,
     start_risk = df_model_full$start_risk, end_risk = df_model_full$end_risk,
     prevalent = df_model_full$prevalent,
+    post_episode = df_model_full$is_tail,        # TRUE: follow-up after the person's last episode (no event)
     stringsAsFactors = FALSE
   )
 

@@ -26,6 +26,7 @@ prepare_stan_data(
   episode_timelines = NULL,
   episode_curves = NULL,
   risk_window = c("observed", "study"),
+  post_episode_risk = TRUE,
   seed = 123
 )
 }
@@ -62,7 +63,10 @@ Should match the value used in simulation. Defaults to 0 (no scaling).}
 
 \item{role_mixing_matrix}{4x4 Matrix defining contact weights between roles.}
 
-\item{recovery_params}{List of Gamma parameters (shape, scale) for the immunity tail by role.}
+\item{recovery_params}{List of Gamma parameters (shape, scale) for the immunity tail by role. A person is
+not at risk between an infection and the end of this tail; it should reflect how long protection really
+lasts, because (with \code{post_episode_risk = TRUE}) it also decides how much follow-up after the last
+infection counts as time at risk.}
 
 \item{imputation_params}{List of parameters for mechanistic viral curves by role (used when no
 Stage 1 curve is available): Ct needs \code{Cpeak, r, d, t_peak}; log10 viral load needs
@@ -84,6 +88,12 @@ random imputation (with a message).}
 same Stage 1 draw. Observed values still overwrite the curve on tested days.}
 
 \item{risk_window}{"observed" (default) or "study"; see the section on at-risk windows.}
+
+\item{post_episode_risk}{Logical. If \code{TRUE} (default), a person who has had an infection episode
+contributes one more at-risk unit, with no infection, from the end of their immunity tail to their last
+sample (they are susceptible again once protection has waned). If \code{FALSE}, follow-up after a
+person's last episode is ignored, as in earlier versions; this overstates transmission rates by the
+share of person-time omitted, which is large when protection is short.}
 
 \item{seed}{Integer. Random seed for reproducibility. Defaults to 123.}
 }
