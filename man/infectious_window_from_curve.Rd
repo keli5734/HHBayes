@@ -13,7 +13,8 @@ infectious_window_from_curve(
   prev_neg = NA,
   next_neg = NA,
   min_incub_days = 1,
-  horizon_after = 60
+  horizon_after = 60,
+  infection_lag = NULL
 )
 }
 \arguments{
@@ -28,6 +29,12 @@ after the last positive (relative to the first positive); \code{NA} if none.}
 the simulator with \code{infectious_period = "viral"}).}
 
 \item{horizon_after}{Days after the last positive to search for the end of detectability.}
+
+\item{infection_lag}{\code{NULL} (default): infection is dated from the Stage 1 \code{tinc}
+(\code{max(min_incub_days, round(tinc))} days before the first positive; \code{tinc} is only weakly
+identified, so this is largely prior-driven). A number: infection is dated this many days
+(at least 1) before the \strong{first infectious day} instead, i.e. the known time from infection to
+detectable virus is used and the infectious start (which the samples do inform) sets the date.}
 }
 \value{
 list(infection, start, end), days relative to the first positive.

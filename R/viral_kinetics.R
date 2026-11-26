@@ -61,11 +61,17 @@ kinetics_curve <- function(s, cp, vl_type) {
 #' @param min_incub_days Minimum days between infection and first positive (default 1, which matches
 #'   the simulator with \code{infectious_period = "viral"}).
 #' @param horizon_after Days after the last positive to search for the end of detectability.
+#' @param infection_lag \code{NULL} (default): infection is dated from the Stage 1 \code{tinc}
+#'   (\code{max(min_incub_days, round(tinc))} days before the first positive; \code{tinc} is only weakly
+#'   identified, so this is largely prior-driven). A number: infection is dated this many days
+#'   (at least 1) before the \strong{first infectious day} instead, i.e. the known time from infection to
+#'   detectable virus is used and the infectious start (which the samples do inform) sets the date.
 #' @return list(infection, start, end), days relative to the first positive.
 #' @export
 infectious_window_from_curve <- function(cp, tinc, vl_type, lod, last_pos = 0,
                                          prev_neg = NA, next_neg = NA,
-                                         min_incub_days = 1, horizon_after = 60) {
+                                         min_incub_days = 1, horizon_after = 60,
+                                         infection_lag = NULL) {
   grid <- seq(floor(-tinc) - 2, ceiling(last_pos) + horizon_after)
   mu   <- kinetics_curve(grid + tinc, cp, vl_type)
   det  <- if (vl_type == 0) mu <= lod else mu >= lod
@@ -78,9 +84,13 @@ infectious_window_from_curve <- function(cp, tinc, vl_type, lod, last_pos = 0,
   lower_ok <- if (is.na(prev_neg)) -Inf else prev_neg + 1
   upper_ok <- if (is.na(next_neg))  Inf else next_neg - 1
 
-  inf_rel <- -max(min_incub_days, round(tinc))
   start <- min(max(start_c, lower_ok), 0)     # include the first positive
-  start <- min(max(start, inf_rel + 1), 0)    # infectious from at least the day after infection
+  if (is.null(infection_lag)) {
+    inf_rel <- -max(min_incub_days, round(tinc))
+    start <- min(max(start, inf_rel + 1), 0)  # infectious from at least the day after infection
+  } else {
+    inf_rel <- start - max(1, round(infection_lag))   # infection a known lag before the first infectious day
+  }
   end   <- max(min(end_c, upper_ok), last_pos)  # include the last positive
   list(infection = inf_rel, start = start, end = end)
 }
@@ -374,9 +384,16 @@ summarize_kinetics <- function(kin_fit, probs = c(0.025, 0.5, 0.975)) {
 #' @param ex Optional output of \code{kinetics_extract()} (pass it when looping over many draws).
 #' @param min_incub_days Minimum days between infection and the first positive (default 1, which
 #'   matches the simulator with \code{infectious_period = "viral"}).
+#' @param infection_lag \code{NULL} (default): infection is dated from the Stage 1 \code{tinc}. A number, or
+#'   a vector named by group (role): infection is dated this many days before the first infectious day
+#'   (the known time from infection to detectable virus, from outside information such as challenge
+#'   studies). See \code{infectious_window_from_curve()}.
+#' @param infection_lag_sd Standard deviation (days) of normal noise added to the lag in every episode and
+#'   draw, so that uncertainty about the lag is carried into Stage 2 (default 0 = fixed lag).
 #' @return list(episode_timelines, episode_curves).
 #' @export
-kinetics_draw_to_timelines <- function(kin_fit, draw, ex = NULL, min_incub_days = 1) {
+kinetics_draw_to_timelines <- function(kin_fit, draw, ex = NULL, min_incub_days = 1,
+                                       infection_lag = NULL, infection_lag_sd = 0) {
   kd <- kin_fit$data
   if (is.null(ex)) ex <- kinetics_extract(kin_fit)
   if (draw < 1 || draw > dim(ex$cp)[1]) stop("draw must be between 1 and ", dim(ex$cp)[1])
@@ -394,8 +411,15 @@ kinetics_draw_to_timelines <- function(kin_fit, draw, ex = NULL, min_incub_days 
     last_rel <- as.numeric(e$last_pos_date - e$first_pos_date)
     prev_rel <- if (is.na(e$prev_neg_date)) NA else as.numeric(e$prev_neg_date - e$first_pos_date)
     next_rel <- if (is.na(e$next_neg_date)) NA else as.numeric(e$next_neg_date - e$first_pos_date)
+    lag_e <- NULL
+    if (!is.null(infection_lag)) {
+      lag_e <- if (!is.null(names(infection_lag))) unname(infection_lag[as.character(e$group)]) else infection_lag[1]
+      if (length(lag_e) != 1 || is.na(lag_e))
+        stop("infection_lag has no value for group '", e$group, "'; give a single number or a vector named by group.")
+      if (infection_lag_sd > 0) lag_e <- lag_e + stats::rnorm(1, 0, infection_lag_sd)
+    }
     w <- infectious_window_from_curve(cp, tinc, kd$vl_type, kd$lod, last_rel, prev_rel, next_rel,
-                                      min_incub_days)
+                                      min_incub_days, infection_lag = lag_e)
     tl[[r]] <- data.frame(
       participantid = e$participantid, episode_id = e$episode_id,
       date_infection        = e$first_pos_date + w$infection,

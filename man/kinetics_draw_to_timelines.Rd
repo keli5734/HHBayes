@@ -4,7 +4,14 @@
 \alias{kinetics_draw_to_timelines}
 \title{One Stage 1 posterior draw -> timelines for Stage 2}
 \usage{
-kinetics_draw_to_timelines(kin_fit, draw, ex = NULL, min_incub_days = 1)
+kinetics_draw_to_timelines(
+  kin_fit,
+  draw,
+  ex = NULL,
+  min_incub_days = 1,
+  infection_lag = NULL,
+  infection_lag_sd = 0
+)
 }
 \arguments{
 \item{kin_fit}{Output of \code{fit_viral_kinetics()}.}
@@ -15,6 +22,14 @@ kinetics_draw_to_timelines(kin_fit, draw, ex = NULL, min_incub_days = 1)
 
 \item{min_incub_days}{Minimum days between infection and the first positive (default 1, which
 matches the simulator with \code{infectious_period = "viral"}).}
+
+\item{infection_lag}{\code{NULL} (default): infection is dated from the Stage 1 \code{tinc}. A number, or
+a vector named by group (role): infection is dated this many days before the first infectious day
+(the known time from infection to detectable virus, from outside information such as challenge
+studies). See \code{infectious_window_from_curve()}.}
+
+\item{infection_lag_sd}{Standard deviation (days) of normal noise added to the lag in every episode and
+draw, so that uncertainty about the lag is carried into Stage 2 (default 0 = fixed lag).}
 }
 \value{
 list(episode_timelines, episode_curves).
